@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import { v4 as uuidv4 } from 'uuid';
 import getDb from '@/lib/db';
 
+export const runtime = 'nodejs';
+
 export async function POST(request) {
     try {
         const { category, sender, receiver, message, passkey, bg_image } = await request.json();

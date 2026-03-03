@@ -1,13 +1,14 @@
 'use client';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
+/* ─── Data ─────────────────────────────────────────────────────── */
 const CATEGORIES = [
-  { value: 'birthday', label: 'Birthday', icon: '🎂', color: '#E67E22' },
-  { value: 'love', label: 'Love', icon: '🌹', color: '#C9726B' },
-  { value: 'friendship', label: 'Friendship', icon: '🫧', color: '#3B6FD4' },
-  { value: 'anniversary', label: 'Anniversary', icon: '💍', color: '#8E44AD' },
-  { value: 'parents', label: 'Parents', icon: '🌿', color: '#27AE60' },
-  { value: 'colleague', label: 'Colleague', icon: '✦', color: '#7F6E5D' },
+  { value: 'birthday', label: 'Birthday', icon: '🎂' },
+  { value: 'love', label: 'Love', icon: '🌹' },
+  { value: 'friendship', label: 'Friendship', icon: '🫧' },
+  { value: 'anniversary', label: 'Anniversary', icon: '💍' },
+  { value: 'parents', label: 'Parents', icon: '🌿' },
+  { value: 'colleague', label: 'Colleague', icon: '✦' },
 ];
 
 const TEMPLATES = {
@@ -19,60 +20,44 @@ const TEMPLATES = {
   colleague: `[Name],\n\nWorking alongside you has been an absolute pleasure. Your dedication, warmth, and brilliance make every day better. Wishing you all the success you deserve. ✦`,
 };
 
-const BG_OPTIONS = [
-  { id: 'v1065-110', src: '/assets/v1065-110.jpg', label: 'Warm Tones' },
-  { id: '18929278', src: '/assets/18929278_rm175-noon-03b.jpg', label: 'Soft Light' },
-  { id: '16398080', src: '/assets/16398080_v729-noon-4a.jpg', label: 'Dreamy' },
-  { id: '119781', src: '/assets/119781.jpg', label: 'Floral' },
+const BGS = [
+  { id: 'v1065-110', src: '/assets/v1065-110.jpg' },
+  { id: '18929278', src: '/assets/18929278_rm175-noon-03b.jpg' },
+  { id: '16398080', src: '/assets/16398080_v729-noon-4a.jpg' },
+  { id: '119781', src: '/assets/119781.jpg' },
 ];
 
-/* Floating petals / sparkles */
-function Petal({ x, delay, duration, size, char, opacity }) {
-  return (
-    <div style={{
-      position: 'fixed',
-      left: `${x}%`,
-      top: '-40px',
-      fontSize: size,
-      opacity,
-      pointerEvents: 'none',
-      zIndex: 0,
-      animation: `floatDown ${duration}s ${delay}s linear infinite`,
-      userSelect: 'none',
-    }}>{char}</div>
-  );
-}
+/* Petals rendered only client-side */
+const PETALS = typeof window !== 'undefined'
+  ? Array.from({ length: 14 }, (_, i) => ({
+    id: i,
+    left: `${(i * 7.3 + Math.random() * 6) % 95}%`,
+    delay: `${(i * 0.8).toFixed(1)}s`,
+    dur: `${9 + (i % 5) * 2}s`,
+    size: 12 + (i % 5) * 4,
+    char: ['🌸', '✦', '·', '♡', '✿', '❀'][i % 6],
+  }))
+  : [];
 
-const PETALS = Array.from({ length: 18 }, (_, i) => ({
-  id: i,
-  x: Math.random() * 98,
-  delay: Math.random() * 12,
-  duration: 8 + Math.random() * 10,
-  size: `${12 + Math.random() * 16}px`,
-  char: ['🌸', '✦', '·', '♡', '✿', '❀'][Math.floor(Math.random() * 6)],
-  opacity: 0.3 + Math.random() * 0.35,
-}));
-
+/* ─── Component ─────────────────────────────────────────────────── */
 export default function Home() {
   const [step, setStep] = useState(1);
   const [category, setCategory] = useState('');
   const [form, setForm] = useState({ sender: '', receiver: '', message: '', passkey: '' });
-  const [selectedBg, setSelectedBg] = useState(BG_OPTIONS[0].id);
-  const [previewBg, setPreviewBg] = useState(null); // hover preview
-  const [loading, setLoading] = useState(false);
+  const [selectedBg, setSelectedBg] = useState(BGS[0].id);
+  const [hoverBg, setHoverBg] = useState(null);
+  const [bgIdx, setBgIdx] = useState(0);   // wallpaper rotation
   const [wishId, setWishId] = useState(null);
   const [copied, setCopied] = useState(false);
-  const [wallpaperIdx, setWallpaperIdx] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [mounted, setMounted] = useState(false);
 
-  // Slowly rotate wallpaper on homepage
+  useEffect(() => { setMounted(true); }, []);
   useEffect(() => {
-    const t = setInterval(() => setWallpaperIdx(i => (i + 1) % BG_OPTIONS.length), 8000);
+    if (step !== 1) return;
+    const t = setInterval(() => setBgIdx(i => (i + 1) % BGS.length), 7000);
     return () => clearInterval(t);
-  }, []);
-
-  const activeBg = previewBg || selectedBg;
-  const activeBgSrc = BG_OPTIONS.find(b => b.id === activeBg)?.src;
-  const wallpaperSrc = BG_OPTIONS[wallpaperIdx].src;
+  }, [step]);
 
   const selectCat = (cat) => {
     setCategory(cat.value);
@@ -80,8 +65,9 @@ export default function Home() {
     setStep(2);
   };
 
-  const handleSubmit = async (e) => {
+  const submit = async (e) => {
     e.preventDefault();
+    if (!form.message.trim()) return;
     setLoading(true);
     try {
       const res = await fetch('/api/wishes', {
@@ -92,104 +78,146 @@ export default function Home() {
       const data = await res.json();
       if (data.id) { setWishId(data.id); setStep(3); }
       else alert(data.error || 'Something went wrong');
-    } finally { setLoading(false); }
+    } catch { alert('Network error. Please try again.'); }
+    finally { setLoading(false); }
   };
 
   const wishUrl = wishId ? `${typeof window !== 'undefined' ? window.location.origin : ''}/wish/${wishId}` : '';
-  const copyLink = () => {
-    navigator.clipboard.writeText(wishUrl);
+  const copyLink = async () => {
+    try { await navigator.clipboard.writeText(wishUrl); }
+    catch { /* fallback */ const ta = document.createElement('textarea'); ta.value = wishUrl; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
     setCopied(true);
     setTimeout(() => setCopied(false), 2500);
   };
 
   const cat = CATEGORIES.find(c => c.value === category);
+  const activeBgSrc = BGS.find(b => b.id === (hoverBg || selectedBg))?.src;
 
   return (
     <>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400&family=DM+Sans:wght@300;400;500;600&display=swap');
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html, body { height: 100%; overflow: hidden; font-family: 'DM Sans', sans-serif; -webkit-font-smoothing: antialiased; }
+        body { color: #fff; background: #0d0705; }
+        input, textarea, button, select { font-family: inherit; }
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.35); }
+        textarea { resize: none; }
+        ::-webkit-scrollbar { width: 0; }
+
         @keyframes floatDown {
-          0%   { transform: translateY(-40px) rotate(0deg);   opacity: 0; }
-          5%   { opacity: 1; }
-          90%  { opacity: 0.8; }
-          100% { transform: translateY(110vh) rotate(360deg); opacity: 0; }
+          0%   { transform: translateY(-8vh) rotate(0deg); opacity: 0; }
+          8%   { opacity: 0.7; }
+          92%  { opacity: 0.5; }
+          100% { transform: translateY(108vh) rotate(400deg); opacity: 0; }
         }
-        @keyframes fadeUp {
-          from { opacity:0; transform:translateY(18px); }
-          to   { opacity:1; transform:translateY(0); }
+        @keyframes fadeIn  { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes pulse   { 0%,100% { transform: scale(1); } 50% { transform: scale(1.05); } }
+
+        .slide-up  { animation: slideUp 0.45s cubic-bezier(.16,1,.3,1) both; }
+        .slide-up2 { animation: slideUp 0.45s 0.08s cubic-bezier(.16,1,.3,1) both; }
+        .fade-in   { animation: fadeIn 0.35s ease both; }
+
+        .glass {
+          background: rgba(255,255,255,0.07);
+          backdrop-filter: blur(22px);
+          -webkit-backdrop-filter: blur(22px);
+          border: 1px solid rgba(255,255,255,0.12);
+          border-radius: 18px;
+          overflow: hidden;
         }
-        @keyframes fadeIn {
-          from { opacity:0; }
-          to   { opacity:1; }
+        .strip { height: 3px; background: linear-gradient(90deg,#E8C4B8,#C9726B,#9B6E7A,#8A9E8B); }
+
+        .cat-btn {
+          display: flex; align-items: center; gap: 9px;
+          padding: 11px 13px;
+          background: rgba(255,255,255,0.09);
+          border: 1px solid rgba(255,255,255,0.11);
+          border-radius: 13px;
+          cursor: pointer;
+          color: rgba(255,255,255,0.88);
+          font-size: 13px; font-weight: 500;
+          text-align: left; width: 100%;
+          transition: background 0.2s, transform 0.2s, box-shadow 0.2s;
         }
-        @keyframes slowZoom {
-          0%   { transform: scale(1);    }
-          50%  { transform: scale(1.06); }
-          100% { transform: scale(1);    }
+        .cat-btn:hover { background: rgba(255,255,255,0.18); transform: translateY(-1px); box-shadow: 0 4px 16px rgba(0,0,0,0.2); }
+
+        .inp {
+          width: 100%; padding: 11px 13px;
+          background: rgba(0,0,0,0.22);
+          border: 1px solid rgba(255,255,255,0.14);
+          border-radius: 10px;
+          color: #fff; font-size: 14px;
+          outline: none; transition: border-color 0.2s, box-shadow 0.2s;
+          -webkit-appearance: none;
         }
-        @keyframes pulse {
-          0%,100% { transform:scale(1); }
-          50%     { transform:scale(1.04); }
+        .inp:focus { border-color: rgba(255,255,255,0.5); box-shadow: 0 0 0 2px rgba(255,255,255,0.07); }
+
+        .btn-main {
+          width: 100%; padding: 13px;
+          background: rgba(255,255,255,0.93);
+          border: none; border-radius: 12px;
+          color: #1a0e08; font-size: 15px; font-weight: 700;
+          cursor: pointer; transition: all 0.22s ease; letter-spacing: 0.1px;
         }
-        @keyframes wallpaperFade {
-          0%   { opacity:0; }
-          15%  { opacity:1; }
-          85%  { opacity:1; }
-          100% { opacity:0; }
+        .btn-main:hover:not(:disabled) { background: #fff; box-shadow: 0 6px 20px rgba(0,0,0,0.3); transform: translateY(-1px); }
+        .btn-main:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .bg-thumb {
+          height: 46px; border-radius: 9px;
+          overflow: hidden; cursor: pointer;
+          border: 2px solid transparent;
+          padding: 0; position: relative;
+          transition: transform 0.2s, border-color 0.2s, box-shadow 0.2s;
         }
-        * { box-sizing:border-box; margin:0; padding:0; }
-        body { font-family:'DM Sans',sans-serif; color:#2D2D2D; overflow-x:hidden; }
-        input, textarea, button { font-family: inherit; }
-        input::placeholder, textarea::placeholder { color:rgba(100,80,75,0.45); }
-        ::-webkit-scrollbar { width:4px; }
-        ::-webkit-scrollbar-thumb { background:#E8C4B8; border-radius:99px; }
-        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,400;1,600&family=DM+Sans:wght@300;400;500;600&display=swap');
+        .bg-thumb:hover { transform: scale(1.06); }
+        .bg-thumb.active { border-color: #fff; box-shadow: 0 0 0 2px rgba(255,255,255,0.25); }
       `}</style>
 
-      {/* ── Rotating wallpaper background ─────────────────── */}
-      {BG_OPTIONS.map((bg, idx) => (
+      {/* ── Crossfading wallpaper backgrounds ──────────────── */}
+      {BGS.map((bg, i) => (
         <div key={bg.id} style={{
           position: 'fixed', inset: 0, zIndex: 0,
           backgroundImage: `url(${bg.src})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          opacity: idx === wallpaperIdx ? 1 : 0,
-          transition: 'opacity 2s ease',
-          animation: idx === wallpaperIdx ? 'slowZoom 16s ease-in-out infinite' : 'none',
+          backgroundSize: 'cover', backgroundPosition: 'center',
+          opacity: i === bgIdx ? 1 : 0,
+          transition: 'opacity 2.5s ease',
+          willChange: 'opacity',
         }} />
       ))}
-      {/* Dark overlay */}
-      <div style={{ position: 'fixed', inset: 0, zIndex: 1, background: 'linear-gradient(160deg, rgba(15,8,5,0.52) 0%, rgba(15,8,5,0.62) 100%)' }} />
+      {/* Gradient overlay */}
+      <div style={{ position: 'fixed', inset: 0, zIndex: 1, background: 'linear-gradient(160deg,rgba(12,6,3,0.56),rgba(12,6,3,0.66))' }} />
 
       {/* Floating petals */}
-      {PETALS.map(p => <Petal key={p.id} {...p} />)}
+      {mounted && PETALS.map(p => (
+        <div key={p.id} style={{ position: 'fixed', left: p.left, top: '-30px', fontSize: p.size, zIndex: 1, pointerEvents: 'none', animation: `floatDown ${p.dur} ${p.delay} linear infinite`, opacity: 0.4 }}>{p.char}</div>
+      ))}
 
-      {/* ── Page Content ─────────────────────────────────── */}
-      <div style={{ position: 'relative', zIndex: 2, minHeight: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '44px 16px 80px' }}>
+      {/* ── Main layout: full viewport, no scroll ─────────── */}
+      <div style={{ position: 'relative', zIndex: 2, height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
 
         {/* Brand */}
-        <div style={{ textAlign: 'center', marginBottom: 36, animation: 'fadeUp 0.6s ease both' }}>
-          <p style={{ fontSize: 11, letterSpacing: '4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.55)', fontWeight: 500, marginBottom: 12 }}>✦ wishit ✦</p>
-          <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(30px,6vw,42px)', fontWeight: 700, color: '#fff', lineHeight: 1.15, textShadow: '0 2px 24px rgba(0,0,0,0.3)' }}>
+        <div className="slide-up" style={{ textAlign: 'center', marginBottom: step === 2 ? 10 : 20 }}>
+          <p style={{ fontSize: 10, letterSpacing: '4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 8 }}>✦ wishit ✦</p>
+          <h1 style={{ fontFamily: 'Playfair Display, serif', fontSize: 'clamp(26px,5vw,38px)', fontWeight: 700, lineHeight: 1.15, textShadow: '0 2px 20px rgba(0,0,0,0.4)' }}>
             {step === 1 && <><span>Send a wish</span><br /><em style={{ fontWeight: 400 }}>from the heart</em></>}
-            {step === 2 && <><span>Craft your</span><br /><em style={{ fontWeight: 400 }}>message</em></>}
-            {step === 3 && <><span>Your wish is</span><br /><em style={{ fontWeight: 400 }}>ready</em></>}
+            {step === 2 && <><em style={{ fontWeight: 400, fontSize: '0.85em' }}>Craft your message</em></>}
+            {step === 3 && <><em style={{ fontWeight: 400 }}>Your wish is ready</em></>}
           </h1>
-          {step === 1 && <p style={{ color: 'rgba(255,255,255,0.55)', marginTop: 10, fontSize: 14, lineHeight: 1.65 }}>Choose a moment. Write something beautiful.</p>}
         </div>
 
-        {/* ─── STEP 1: Category ───────────────────────────── */}
+        {/* ── STEP 1: category grid ──────────────────────── */}
         {step === 1 && (
-          <div style={{ ...C.glass, animation: 'fadeUp 0.6s 0.12s ease both', width: '100%', maxWidth: 440 }}>
-            <div style={C.strip} />
-            <div style={C.inner}>
-              <p style={C.sectionLabel}>What's the occasion?</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+          <div className="glass slide-up2" style={{ width: '100%', maxWidth: 420 }}>
+            <div className="strip" />
+            <div style={{ padding: '20px 20px 22px' }}>
+              <p style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.45)', letterSpacing: '0.5px', textTransform: 'uppercase', marginBottom: 13 }}>What's the occasion?</p>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {CATEGORIES.map(cat => (
-                  <button key={cat.value} onClick={() => selectCat(cat)} style={C.catPill}
-                    onMouseEnter={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.22)'; e.currentTarget.style.transform = 'translateY(-2px)'; }}
-                    onMouseLeave={e => { e.currentTarget.style.background = 'rgba(255,255,255,0.1)'; e.currentTarget.style.transform = 'none'; }}>
-                    <span style={{ fontSize: 22 }}>{cat.icon}</span>
-                    <span style={{ fontSize: 13, fontWeight: 500, color: 'rgba(255,255,255,0.9)' }}>{cat.label}</span>
+                  <button key={cat.value} className="cat-btn" onClick={() => selectCat(cat)}>
+                    <span style={{ fontSize: 20 }}>{cat.icon}</span>
+                    {cat.label}
                   </button>
                 ))}
               </div>
@@ -197,119 +225,99 @@ export default function Home() {
           </div>
         )}
 
-        {/* ─── STEP 2: Form ───────────────────────────────── */}
+        {/* ── STEP 2: form + preview ─────────────────────── */}
         {step === 2 && (
-          <div style={{ width: '100%', maxWidth: 440, animation: 'fadeUp 0.45s ease both' }}>
-            {/* ── Live wish preview with selected bg ────── */}
-            <div style={{ marginBottom: 16, borderRadius: 16, overflow: 'hidden', boxShadow: '0 8px 32px rgba(0,0,0,0.35)', position: 'relative', height: 180, transition: 'all 0.4s ease' }}>
-              {/* Preview bg */}
-              <img src={activeBgSrc} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'all 0.6s ease' }} />
-              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom, rgba(0,0,0,0.2), rgba(0,0,0,0.55))' }} />
-              {/* Preview content */}
-              <div style={{ position: 'relative', padding: '20px 22px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
-                <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', marginBottom: 4 }}>Preview</p>
-                {(form.receiver || form.sender) && (
-                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 17, color: '#fff', fontStyle: 'italic', lineHeight: 1.3, textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}>
-                    {form.receiver ? `Dear ${form.receiver}` : ''}{form.sender ? ` — from ${form.sender}` : ''}
-                  </p>
-                )}
-                {!form.receiver && !form.sender && (
-                  <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 16, color: 'rgba(255,255,255,0.5)', fontStyle: 'italic' }}>Your wish will appear here…</p>
-                )}
+          <div style={{ width: '100%', maxWidth: 420 }} className="slide-up">
+
+            {/* Live preview */}
+            <div style={{ position: 'relative', height: 120, borderRadius: 14, overflow: 'hidden', marginBottom: 10, boxShadow: '0 6px 24px rgba(0,0,0,0.4)' }}>
+              <img src={activeBgSrc} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', transition: 'opacity 0.5s ease' }} />
+              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,rgba(0,0,0,0.15),rgba(0,0,0,0.6))' }} />
+              <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '10px 14px' }}>
+                <p style={{ fontSize: 9, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', marginBottom: 3 }}>Preview</p>
+                <p style={{ fontFamily: 'Playfair Display, serif', fontSize: 14, fontStyle: 'italic', color: '#fff', lineHeight: 1.35, textShadow: '0 1px 6px rgba(0,0,0,0.6)', overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>
+                  {form.receiver || form.sender
+                    ? `${form.receiver ? `Dear ${form.receiver}` : ''}${form.sender ? ` — from ${form.sender}` : ''}`
+                    : form.message
+                      ? form.message.replace(/\n/g, ' ').slice(0, 80) + (form.message.length > 80 ? '…' : '')
+                      : 'Your message will appear here…'
+                  }
+                </p>
               </div>
-              {cat && <div style={{ position: 'absolute', top: 14, right: 14, fontSize: 22 }}>{cat.icon}</div>}
+              {cat && <div style={{ position: 'absolute', top: 10, right: 12, fontSize: 18 }}>{cat.icon}</div>}
             </div>
 
-            {/* ── Background selector ───────────────── */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8, marginBottom: 16 }}>
-              {BG_OPTIONS.map(bg => (
-                <button key={bg.id} type="button"
+            {/* Bg thumbs */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 7, marginBottom: 10 }}>
+              {BGS.map(bg => (
+                <button key={bg.id} className={`bg-thumb ${selectedBg === bg.id ? 'active' : ''}`}
                   onClick={() => setSelectedBg(bg.id)}
-                  onMouseEnter={() => setPreviewBg(bg.id)}
-                  onMouseLeave={() => setPreviewBg(null)}
-                  style={{ height: 52, borderRadius: 10, overflow: 'hidden', border: selectedBg === bg.id ? '2px solid #fff' : '2px solid transparent', cursor: 'pointer', padding: 0, position: 'relative', transition: 'all 0.2s', transform: selectedBg === bg.id ? 'scale(1.05)' : 'scale(1)', boxShadow: selectedBg === bg.id ? '0 4px 16px rgba(0,0,0,0.35)' : '0 2px 8px rgba(0,0,0,0.2)' }}>
-                  <img src={bg.src} alt={bg.label} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  onMouseEnter={() => setHoverBg(bg.id)}
+                  onMouseLeave={() => setHoverBg(null)}>
+                  <img src={bg.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   {selectedBg === bg.id && (
-                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(201,114,107,0.4)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontSize: 14, fontWeight: 700 }}>✓</div>
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(201,114,107,0.45)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, fontWeight: 700 }}>✓</div>
                   )}
                 </button>
               ))}
             </div>
 
-            {/* ── Card form ───────────────────────── */}
-            <div style={C.glass}>
-              <div style={C.strip} />
-              <div style={C.inner}>
-                <button onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.55)', fontSize: 13, cursor: 'pointer', marginBottom: 16, display: 'flex', alignItems: 'center', gap: 4 }}>← Back</button>
-
-                {cat && <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', borderRadius: 999, background: 'rgba(255,255,255,0.12)', color: 'rgba(255,255,255,0.85)', fontSize: 12, fontWeight: 600, marginBottom: 18, border: '1px solid rgba(255,255,255,0.15)' }}>
-                  {cat.icon} {cat.label}
-                </span>}
-
-                <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+            {/* Form */}
+            <div className="glass">
+              <div className="strip" />
+              <div style={{ padding: '16px 18px 20px' }}>
+                <button onClick={() => setStep(1)} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.45)', fontSize: 12, cursor: 'pointer', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 4 }}>← Back</button>
+                <form onSubmit={submit}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 9 }}>
                     <div>
-                      <label style={C.label}>From</label>
-                      <input style={C.input} placeholder="Your name" value={form.sender}
-                        onChange={e => setForm(f => ({ ...f, sender: e.target.value }))}
-                        onFocus={e => e.target.style.borderColor = 'rgba(255,255,255,0.5)'}
-                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.15)'} />
+                      <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.4px' }}>From</label>
+                      <input className="inp" placeholder="Your name" value={form.sender} onChange={e => setForm(f => ({ ...f, sender: e.target.value }))} />
                     </div>
                     <div>
-                      <label style={C.label}>To</label>
-                      <input style={C.input} placeholder="Their name" value={form.receiver}
-                        onChange={e => setForm(f => ({ ...f, receiver: e.target.value }))}
-                        onFocus={e => e.target.style.borderColor = 'rgba(255,255,255,0.5)'}
-                        onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.15)'} />
+                      <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.4px' }}>To</label>
+                      <input className="inp" placeholder="Their name" value={form.receiver} onChange={e => setForm(f => ({ ...f, receiver: e.target.value }))} />
                     </div>
                   </div>
-                  <div>
-                    <label style={C.label}>Message</label>
-                    <textarea style={{ ...C.input, resize: 'none', lineHeight: 1.75 }} rows={6}
-                      value={form.message} onChange={e => setForm(f => ({ ...f, message: e.target.value }))} required
-                      onFocus={e => e.target.style.borderColor = 'rgba(255,255,255,0.5)'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.15)'} />
+                  <div style={{ marginBottom: 9 }}>
+                    <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Message</label>
+                    <textarea className="inp" rows={4} value={form.message} required onChange={e => setForm(f => ({ ...f, message: e.target.value }))} />
                   </div>
-                  <div>
-                    <label style={C.label}>Passkey <span style={{ fontWeight: 400, letterSpacing: 0, textTransform: 'none' }}>(optional)</span></label>
-                    <input style={C.input} type="password" placeholder="Lock with a secret passkey…" value={form.passkey}
-                      onChange={e => setForm(f => ({ ...f, passkey: e.target.value }))}
-                      onFocus={e => e.target.style.borderColor = 'rgba(255,255,255,0.5)'}
-                      onBlur={e => e.target.style.borderColor = 'rgba(255,255,255,0.15)'} />
+                  <div style={{ marginBottom: 12 }}>
+                    <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.45)', marginBottom: 5, textTransform: 'uppercase', letterSpacing: '0.4px' }}>Passkey <span style={{ textTransform: 'none', fontWeight: 400 }}>(optional)</span></label>
+                    <input className="inp" type="password" placeholder="Lock with a passkey…" value={form.passkey} onChange={e => setForm(f => ({ ...f, passkey: e.target.value }))} />
                   </div>
-                  <div style={{ height: 1, background: 'rgba(255,255,255,0.12)', margin: '2px 0' }} />
-                  <button type="submit" disabled={loading} style={C.btnPrimary}>
-                    {loading ? 'Creating…' : 'Generate Wish Link  →'}
-                  </button>
+                  <button className="btn-main" type="submit" disabled={loading}>{loading ? 'Creating…' : 'Generate Wish Link  →'}</button>
                 </form>
               </div>
             </div>
           </div>
         )}
 
-        {/* ─── STEP 3: Share ─────────────────────────────── */}
+        {/* ── STEP 3: share ──────────────────────────────── */}
         {step === 3 && (
-          <div style={{ ...C.glass, width: '100%', maxWidth: 440, animation: 'fadeUp 0.45s ease both' }}>
-            <div style={C.strip} />
-            <div style={{ ...C.inner, textAlign: 'center' }}>
-              <div style={{ fontSize: 50, marginBottom: 14, animation: 'pulse 2s ease-in-out infinite', display: 'inline-block' }}>🎀</div>
-              <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 22, color: '#fff', marginBottom: 8 }}>All done!</h2>
-              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: 14, marginBottom: 24, lineHeight: 1.65 }}>
-                Copy this link and share it with your special someone
-              </p>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 12, padding: '12px 14px', marginBottom: 12 }}>
-                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: 13, color: 'rgba(255,255,255,0.7)' }}>{wishUrl}</span>
-                <button onClick={copyLink} style={{ flexShrink: 0, padding: '7px 16px', borderRadius: 8, border: 'none', background: copied ? 'rgba(138,158,139,0.8)' : 'rgba(255,255,255,0.18)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+          <div className="glass slide-up" style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
+            <div className="strip" />
+            <div style={{ padding: '28px 22px 30px' }}>
+              <div style={{ fontSize: 44, marginBottom: 12, display: 'inline-block', animation: 'pulse 2s ease-in-out infinite' }}>🎀</div>
+              <h2 style={{ fontFamily: 'Playfair Display, serif', fontSize: 21, fontWeight: 700, marginBottom: 8 }}>Your wish is ready!</h2>
+              <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, marginBottom: 20, lineHeight: 1.6 }}>Share this link with your special someone</p>
+
+              {/* URL row */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 11, padding: '10px 12px', marginBottom: 10 }}>
+                <span style={{ flex: 1, fontSize: 12, color: 'rgba(255,255,255,0.65)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>{wishUrl}</span>
+                <button onClick={copyLink} style={{ flexShrink: 0, padding: '6px 14px', borderRadius: 8, border: 'none', background: copied ? 'rgba(138,158,139,0.85)' : 'rgba(255,255,255,0.18)', color: '#fff', fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
                   {copied ? '✓ Copied!' : 'Copy'}
                 </button>
               </div>
+
               {form.passkey && (
-                <div style={{ background: 'rgba(255,200,150,0.12)', border: '1px solid rgba(255,200,150,0.25)', borderRadius: 10, padding: '11px 14px', marginBottom: 16, textAlign: 'left' }}>
-                  <p style={{ fontSize: 13, color: 'rgba(255,220,180,0.9)', lineHeight: 1.5 }}>🔐 Remember to share the passkey: <strong>{form.passkey}</strong></p>
+                <div style={{ background: 'rgba(255,200,130,0.1)', border: '1px solid rgba(255,200,130,0.2)', borderRadius: 9, padding: '10px 13px', marginBottom: 14, textAlign: 'left' }}>
+                  <p style={{ fontSize: 12, color: 'rgba(255,220,160,0.9)', lineHeight: 1.5 }}>🔐 Share the passkey too: <strong>{form.passkey}</strong></p>
                 </div>
               )}
-              <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '16px 0' }} />
-              <button style={{ ...C.btnPrimary, background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)' }}
+
+              <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '14px 0' }} />
+              <button style={{ padding: '10px 22px', borderRadius: 10, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.75)', fontSize: 13, cursor: 'pointer', transition: 'all 0.2s' }}
                 onClick={() => { setStep(1); setCategory(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); }}>
                 + Create another wish
               </button>
@@ -317,84 +325,8 @@ export default function Home() {
           </div>
         )}
 
-        <p style={{ marginTop: 36, color: 'rgba(255,255,255,0.3)', fontSize: 11, letterSpacing: '2px', textTransform: 'uppercase', textAlign: 'center' }}>Made with ♡ — WishIt</p>
+        <p style={{ marginTop: 16, fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)' }}>Made with ♡ — WishIt</p>
       </div>
     </>
   );
 }
-
-/* Reusable style objects */
-const C = {
-  glass: {
-    background: 'rgba(255,255,255,0.08)',
-    backdropFilter: 'blur(24px)',
-    WebkitBackdropFilter: 'blur(24px)',
-    border: '1px solid rgba(255,255,255,0.13)',
-    borderRadius: 20,
-    overflow: 'hidden',
-  },
-  strip: {
-    height: 4,
-    background: 'linear-gradient(90deg,#E8C4B8,#C9726B,#9B6E7A,#8A9E8B)',
-  },
-  inner: {
-    padding: '26px 26px 30px',
-  },
-  sectionLabel: {
-    fontSize: 11,
-    fontWeight: 600,
-    color: 'rgba(255,255,255,0.5)',
-    letterSpacing: '1px',
-    textTransform: 'uppercase',
-    marginBottom: 14,
-  },
-  catPill: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-    padding: '13px 14px',
-    background: 'rgba(255,255,255,0.1)',
-    border: '1px solid rgba(255,255,255,0.12)',
-    borderRadius: 14,
-    cursor: 'pointer',
-    textAlign: 'left',
-    color: '#fff',
-    transition: 'all 0.22s ease',
-    width: '100%',
-  },
-  label: {
-    display: 'block',
-    fontSize: 11,
-    fontWeight: 600,
-    color: 'rgba(255,255,255,0.5)',
-    marginBottom: 6,
-    letterSpacing: '0.5px',
-    textTransform: 'uppercase',
-  },
-  input: {
-    width: '100%',
-    padding: '12px 14px',
-    background: 'rgba(0,0,0,0.2)',
-    border: '1px solid rgba(255,255,255,0.15)',
-    borderRadius: 10,
-    color: '#fff',
-    fontSize: 14,
-    fontFamily: 'DM Sans, sans-serif',
-    transition: 'border-color 0.2s',
-    outline: 'none',
-    WebkitAppearance: 'none',
-  },
-  btnPrimary: {
-    width: '100%',
-    padding: '14px',
-    border: 'none',
-    borderRadius: 12,
-    background: 'rgba(255,255,255,0.95)',
-    color: '#2D2D2D',
-    fontSize: 15,
-    fontWeight: 700,
-    cursor: 'pointer',
-    transition: 'all 0.25s ease',
-    letterSpacing: '0.2px',
-  },
-};
