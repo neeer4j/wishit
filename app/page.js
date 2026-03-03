@@ -98,8 +98,17 @@ export default function Home() {
         .glass{background:rgba(255,255,255,0.07);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);border:1px solid rgba(255,255,255,0.12);border-radius:18px;overflow:hidden}
         .strip{height:3px;background:linear-gradient(90deg,#E8C4B8,#C9726B,#9B6E7A,#8A9E8B)}
 
-        .cat-btn{display:flex;align-items:center;gap:9px;padding:11px 13px;background:rgba(255,255,255,0.09);border:1px solid rgba(255,255,255,0.11);border-radius:13px;cursor:pointer;color:rgba(255,255,255,0.88);font-size:13px;font-weight:500;text-align:left;width:100%;transition:background .2s,transform .2s,box-shadow .2s}
-        .cat-btn:hover{background:rgba(255,255,255,0.18);transform:translateY(-1px)}
+        .cat-btn{display:flex;align-items:center;gap:10px;padding:12px 14px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);border-radius:14px;cursor:pointer;color:rgba(255,255,255,0.85);font-size:13px;font-weight:500;text-align:left;width:100%;transition:all .25s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden}
+        .cat-btn::before{content:'';position:absolute;inset:0;border-radius:14px;opacity:0;background:linear-gradient(135deg,rgba(232,196,184,0.15),rgba(201,114,107,0.15),rgba(155,110,122,0.15));transition:opacity .25s}
+        .cat-btn:hover{border-color:rgba(232,196,184,0.4);transform:translateY(-2px);box-shadow:0 6px 24px rgba(0,0,0,0.25),0 0 0 1px rgba(232,196,184,0.15)}
+        .cat-btn:hover::before{opacity:1}
+        .cat-btn:active{transform:translateY(0) scale(0.98)}
+        .cat-icon{width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;transition:background .25s}
+        .cat-btn:hover .cat-icon{background:rgba(232,196,184,0.2)}
+        @keyframes shimmer{0%{background-position:200% center}100%{background-position:-200% center}}
+        @keyframes heartbeat{0%,100%{transform:scale(1)}15%{transform:scale(1.2)}30%{transform:scale(1)}45%{transform:scale(1.1)}60%{transform:scale(1)}}
+        .credit-pill{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:999px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.1);backdrop-filter:blur(10px);font-size:11px;letter-spacing:.5px;color:transparent;background-clip:text;-webkit-background-clip:text;background-image:linear-gradient(90deg,rgba(255,255,255,0.35),rgba(232,196,184,0.7),rgba(201,114,107,0.7),rgba(232,196,184,0.7),rgba(255,255,255,0.35));background-size:200%;animation:shimmer 4s linear infinite}
+        .credit-heart{animation:heartbeat 2.2s ease-in-out infinite;display:inline-block;color:rgba(201,114,107,0.9);-webkit-background-clip:unset;background-clip:unset}
 
         /* Inputs that sit ON TOP of the image – minimal, transparent */
         .overlay-inp{
@@ -182,7 +191,8 @@ export default function Home() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                 {CATEGORIES.map(c => (
                   <button key={c.value} className="cat-btn" onClick={() => selectCat(c)}>
-                    <span style={{ fontSize: 20 }}>{c.icon}</span>{c.label}
+                    <span className="cat-icon">{c.icon}</span>
+                    <span style={{ lineHeight: 1.2 }}>{c.label}</span>
                   </button>
                 ))}
               </div>
@@ -286,7 +296,14 @@ export default function Home() {
           </div>
         )}
 
-        <p style={{ marginTop: 14, fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)' }}>Made with ♡ — WishIt</p>
+        {step === 1 && (
+          <div style={{ marginTop: 20, textAlign: 'center' }}>
+            <span className="credit-pill">
+              <span className="credit-heart" style={{ fontSize: 13 }}>♡</span>
+              made with love by <strong style={{ fontWeight: 600, letterSpacing: '.3px' }}>neeer4j</strong>
+            </span>
+          </div>
+        )}
       </div>
     </>
   );
