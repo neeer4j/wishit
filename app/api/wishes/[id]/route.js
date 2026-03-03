@@ -6,9 +6,9 @@ export const runtime = 'nodejs';
 export async function GET(request, context) {
     try {
         const { id } = await context.params;
-        const db = await initDb();
-        const result = await db.execute({ sql: 'SELECT * FROM wishes WHERE id = ?', args: [id] });
-        const row = result.rows[0];
+        const sql = await initDb();
+        const rows = await sql`SELECT * FROM wishes WHERE id = ${id}`;
+        const row = rows[0];
         if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
         return NextResponse.json({
             category: row.category,
@@ -21,7 +21,7 @@ export async function GET(request, context) {
         });
     } catch (e) {
         console.error('GET wish error:', e);
-        return NextResponse.json({ error: 'Server error' }, { status: 500 });
+        return NextResponse.json({ error: e.message || 'Server error' }, { status: 500 });
     }
 }
 
@@ -29,9 +29,9 @@ export async function POST(request, context) {
     try {
         const { id } = await context.params;
         const { passkey } = await request.json();
-        const db = await initDb();
-        const result = await db.execute({ sql: 'SELECT message, passkey, bg_image FROM wishes WHERE id = ?', args: [id] });
-        const row = result.rows[0];
+        const sql = await initDb();
+        const rows = await sql`SELECT message, passkey, bg_image FROM wishes WHERE id = ${id}`;
+        const row = rows[0];
         if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 });
         if (row.passkey && row.passkey !== passkey) {
             return NextResponse.json({ error: 'Wrong passkey' }, { status: 401 });
@@ -39,6 +39,6 @@ export async function POST(request, context) {
         return NextResponse.json({ message: row.message, bg_image: row.bg_image || null });
     } catch (e) {
         console.error('POST wish error:', e);
-        return NextResponse.json({ error: 'Server error' }, { status: 500 });
+        return NextResponse.json({ error: e.message || 'Server error' }, { status: 500 });
     }
 }
