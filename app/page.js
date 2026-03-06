@@ -58,11 +58,20 @@ const FONTS = [
 ];
 
 const EXPIRY_OPTIONS = [
-  { label: 'Never', value: null },
   { label: '1 day', value: 1 },
+  { label: '2 days', value: 2 },
   { label: '3 days', value: 3 },
-  { label: '7 days', value: 7 },
-  { label: '30 days', value: 30 },
+  { label: '4 days', value: 4 },
+  { label: '5 days', value: 5 },
+  { label: '6 days', value: 6 },
+  { label: '1 week', value: 7 },
+  { label: '8 days', value: 8 },
+  { label: '9 days', value: 9 },
+  { label: '10 days', value: 10 },
+  { label: '11 days', value: 11 },
+  { label: '12 days', value: 12 },
+  { label: '13 days', value: 13 },
+  { label: '2 weeks', value: 14 },
 ];
 
 const PETALS = Array.from({ length: 12 }, (_, i) => ({
@@ -83,7 +92,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [font, setFont] = useState('playfair');
   const [overlayOpacity, setOverlayOpacity] = useState(0.55);
-  const [expiryDays, setExpiryDays] = useState(null);
+  const [expiryDays, setExpiryDays] = useState(1);
   const [scheduledAt, setScheduledAt] = useState('');
   const [showQr, setShowQr] = useState(false);
   const qrCanvasRef = useRef(null);
@@ -419,8 +428,8 @@ export default function Home() {
                 </div>
                 <div>
                   <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 5 }}>Link expires</label>
-                  <select className="option-inp" value={expiryDays ?? ''} onChange={e => setExpiryDays(e.target.value ? parseInt(e.target.value) : null)}>
-                    {EXPIRY_OPTIONS.map(o => <option key={String(o.value)} value={o.value ?? ''}>{o.label}</option>)}
+                  <select className="option-inp" value={expiryDays} onChange={e => setExpiryDays(parseInt(e.target.value))}>
+                    {EXPIRY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
                   </select>
                 </div>
               </div>
@@ -502,7 +511,7 @@ export default function Home() {
 
               <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '14px 0' }} />
               <button style={{ padding: '10px 22px', borderRadius: 10, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.75)', fontSize: 13, cursor: 'pointer' }}
-                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(null); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); }}>
+                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(1); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); }}>
                 + Create another wish
               </button>
             </div>
