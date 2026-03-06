@@ -1,0 +1,23 @@
+-- Run this ONCE in the Supabase SQL Editor:
+-- https://supabase.com/dashboard/project/mlkjhjgovfgsjjkaclooa/editor
+
+CREATE TABLE IF NOT EXISTS wishes (
+  id            TEXT PRIMARY KEY,
+  category      TEXT NOT NULL,
+  sender        TEXT,
+  receiver      TEXT,
+  message       TEXT NOT NULL,
+  passkey       TEXT,
+  bg_image      TEXT,
+  font          TEXT DEFAULT 'playfair',
+  overlay_opacity REAL DEFAULT 0.55,
+  expires_at    TIMESTAMPTZ,
+  opened_at     TIMESTAMPTZ,
+  reply_to      TEXT,
+  scheduled_at  TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Optional: disable Row Level Security so the service role key can read/write freely
+-- (it bypasses RLS anyway, but this also allows anon reads if needed)
+ALTER TABLE wishes DISABLE ROW LEVEL SECURITY;
