@@ -239,7 +239,7 @@ export default function WishPage() {
 
             {/* Floating petals */}
             {['🌸', '✦', '·', '♡', '✿'].map((c, i) => (
-                <div key={i} style={{ position: 'fixed', left: `${12 + i * 18}%`, top: '-24px', fontSize: 13 + i * 2, zIndex: 1, pointerEvents: 'none', opacity: 0.3, animation: `floatDown ${10 + i * 3}s ${i * 1.5}s linear infinite` }}>{c}</div>
+                <div key={i} style={{ position: 'fixed', left: `${12 + i * 18}%`, top: '-24px', fontSize: 13 + i * 2, zIndex: 1, pointerEvents: 'none', opacity: 0.3, animation: `floatDown ${10 + i * 3}s ${i * 1.5}s linear infinite`, willChange: 'transform' }}>{c}</div>
             ))}
 
             <div style={{ position: 'relative', zIndex: 2, height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
@@ -250,7 +250,7 @@ export default function WishPage() {
                 {/* Loading */}
                 {status === 'loading' && (
                     <div style={{ textAlign: 'center' }}>
-                        <div style={{ fontSize: 42, marginBottom: 12, animation: 'pulse 1.8s ease-in-out infinite', display: 'inline-block' }}>💌</div>
+                        <div style={{ fontSize: 42, marginBottom: 12, animation: 'pulse 1.8s ease-in-out infinite', display: 'inline-block', willChange: 'transform' }}>💌</div>
                         <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14 }}>Opening your wish…</p>
                     </div>
                 )}
@@ -286,7 +286,7 @@ export default function WishPage() {
                     <div className="glass slide-up" style={{ width: '100%', maxWidth: 400 }}>
                         <div className="strip" style={{ background: 'linear-gradient(90deg,#1E3A5F,#3B82F6,#60A5FA)' }} />
                         <div style={{ padding: '32px 24px', textAlign: 'center' }}>
-                            <div style={{ fontSize: 42, marginBottom: 12, animation: 'pulse 2.5s ease-in-out infinite', display: 'inline-block' }}>⏰</div>
+                            <div style={{ fontSize: 42, marginBottom: 12, animation: 'pulse 2.5s ease-in-out infinite', display: 'inline-block', willChange: 'transform' }}>⏰</div>
                             <h2 style={{ fontFamily: 'Playfair Display,serif', fontSize: 20, marginBottom: 8 }}>
                                 {wish.sender ? `${wish.sender} has a wish for you` : 'A wish is waiting for you'}
                             </h2>
@@ -315,7 +315,7 @@ export default function WishPage() {
                                 </>
                             )}
                             <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '14px 20px' }}>
-                                <div style={{ fontSize: 28, marginBottom: 6, animation: 'pulse 3s ease-in-out infinite', display: 'inline-block' }}>{meta.icon}</div>
+                                <div style={{ fontSize: 28, marginBottom: 6, animation: 'pulse 3s ease-in-out infinite', display: 'inline-block', willChange: 'transform' }}>{meta.icon}</div>
                                 {wish?.receiver && (
                                     <h1 style={{ fontFamily: 'Playfair Display,serif', fontSize: 22, lineHeight: 1.2, textShadow: '0 2px 10px rgba(0,0,0,0.5)', margin: 0 }}>
                                         Dear {wish.receiver}
@@ -338,7 +338,7 @@ export default function WishPage() {
                             {/* Locked */}
                             {status === 'locked' && (
                                 <div className="fade-in">
-                                    <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, margin: '0 auto 14px', animation: 'pulse 2.5s ease-in-out infinite' }}>🔐</div>
+                                    <div style={{ width: 60, height: 60, borderRadius: '50%', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, margin: '0 auto 14px', animation: 'pulse 2.5s ease-in-out infinite', willChange: 'transform' }}>🔐</div>
                                     <h2 style={{ fontFamily: 'Playfair Display,serif', fontSize: 18, textAlign: 'center', marginBottom: 6 }}>This wish is sealed</h2>
                                     <p style={{ color: 'rgba(255,255,255,0.48)', fontSize: 13, textAlign: 'center', marginBottom: 20, lineHeight: 1.6 }}>Enter the secret passkey to unlock your message</p>
                                     <form onSubmit={unlock} style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>

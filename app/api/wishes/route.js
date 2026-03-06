@@ -8,7 +8,7 @@ export async function POST(request) {
     try {
         const {
             category, sender, receiver, message, passkey, bg_image,
-            font, overlay_opacity, expires_at, scheduled_at,
+            font, overlay_opacity, expires_at, scheduled_at, user_id,
         } = await request.json();
 
         if (!category || !message?.trim()) {
@@ -30,6 +30,7 @@ export async function POST(request) {
             overlay_opacity: overlay_opacity ?? 0.55,
             expires_at: expires_at || null,
             scheduled_at: scheduled_at || null,
+            user_id: user_id || null,
         });
 
         if (error) throw error;

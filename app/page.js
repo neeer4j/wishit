@@ -86,6 +86,7 @@ export default function Home() {
   const [selBg, setSelBg] = useState(BGS[0].id);
   const [hoverBg, setHoverBg] = useState(null);
   const [bgIdx, setBgIdx] = useState(0);
+  const [loadedBgs, setLoadedBgs] = useState([0, 1]); // Only load first 2 images
   const [wishId, setWishId] = useState(null);
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -97,10 +98,36 @@ export default function Home() {
   const [showQr, setShowQr] = useState(false);
   const qrCanvasRef = useRef(null);
 
+  // Auth state
+  const [session, setSession] = useState(null); // { userId, username }
+  const [authTab, setAuthTab] = useState('login');
+  const [authForm, setAuthForm] = useState({ username: '', password: '' });
+  const [authLoading, setAuthLoading] = useState(false);
+  const [authError, setAuthError] = useState('');
+  const [authDone, setAuthDone] = useState(false);
+  const [myWishes, setMyWishes] = useState([]);
+  const [myWishesLoading, setMyWishesLoading] = useState(false);
+
   useEffect(() => { setMounted(true); }, []);
+
+  // Restore session from localStorage
+  useEffect(() => {
+    try { const s = localStorage.getItem('wishit_session'); if (s) setSession(JSON.parse(s)); } catch { }
+  }, []);
+
   useEffect(() => {
     if (step !== 1) return;
-    const t = setInterval(() => setBgIdx(i => (i + 1) % BGS.length), 7000);
+    const t = setInterval(() => {
+      setBgIdx(i => {
+        const nextIdx = (i + 1) % BGS.length;
+        // Preload the next image so it's ready for next rotation
+        setLoadedBgs(prev => {
+          const toAdd = (nextIdx + 1) % BGS.length;
+          return prev.includes(toAdd) ? prev : [...prev, toAdd];
+        });
+        return nextIdx;
+      });
+    }, 7000);
     return () => clearInterval(t);
   }, [step]);
 
@@ -169,10 +196,11 @@ export default function Home() {
           category, ...form, bg_image: selBg,
           font, overlay_opacity: overlayOpacity,
           expires_at, scheduled_at,
+          user_id: session?.userId || null,
         }),
       });
       const data = await res.json();
-      if (data.id) { setWishId(data.id); setStep(3); }
+      if (data.id) { setWishId(data.id); setStep(3); if (session?.userId) setAuthDone(true); }
       else alert(data.error || 'Something went wrong');
     } catch { alert('Network error. Please try again.'); }
     finally { setLoading(false); }
@@ -200,6 +228,56 @@ export default function Home() {
     link.download = 'wish-qr.png';
     link.href = canvas.toDataURL();
     link.click();
+  };
+
+  const saveSession = (s) => {
+    setSession(s);
+    localStorage.setItem('wishit_session', JSON.stringify(s));
+  };
+
+  const logout = () => {
+    setSession(null);
+    localStorage.removeItem('wishit_session');
+    setAuthDone(false);
+    setAuthForm({ username: '', password: '' });
+    setAuthError('');
+  };
+
+  const handleAuth = async (e) => {
+    e.preventDefault();
+    if (!authForm.username.trim() || !authForm.password) return;
+    setAuthLoading(true);
+    setAuthError('');
+    try {
+      const endpoint = authTab === 'signup' ? '/api/auth/signup' : '/api/auth/login';
+      const res = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username: authForm.username.trim(), password: authForm.password }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setAuthError(data.error || 'Something went wrong'); return; }
+      saveSession({ userId: data.userId, username: data.username });
+      if (wishId) {
+        await fetch('/api/auth/claim', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ wishId, userId: data.userId }),
+        });
+        setAuthDone(true);
+      }
+    } catch { setAuthError('Network error. Please try again.'); }
+    finally { setAuthLoading(false); }
+  };
+
+  const loadMyWishes = async (userId) => {
+    setMyWishesLoading(true);
+    try {
+      const res = await fetch(`/api/user/wishes?userId=${userId}`);
+      const data = await res.json();
+      setMyWishes(data.wishes || []);
+    } catch { }
+    finally { setMyWishesLoading(false); }
   };
 
   const cat = CATEGORIES.find(c => c.value === category);
@@ -284,6 +362,11 @@ export default function Home() {
         .option-inp:focus{border-color:rgba(255,255,255,0.4)}
         .option-inp option{background:#1a0e08;color:#fff}
 
+        .auth-tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:600;color:rgba(255,255,255,0.4);border-bottom:2px solid transparent;cursor:pointer;transition:all .2s}
+        .auth-tab.active{color:#fff;border-bottom-color:rgba(201,114,107,0.8)}
+        .auth-inp{background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
+        .auth-inp:focus{border-color:rgba(255,255,255,0.3)}
+
         .bg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%}
 
         .scroll-content{overflow-y:auto;max-height:calc(100dvh - 120px);padding:0 16px 16px;display:flex;flex-direction:column;gap:10px;scrollbar-width:none}
@@ -291,9 +374,9 @@ export default function Home() {
       `}</style>
 
       {/* ── Rotating wallpaper (step 1 only) */}
-      {BGS.map((bg, i) => (
+      {BGS.map((bg, i) => loadedBgs.includes(i) ? (
         <div key={bg.id} style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: `url(${bg.src})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: step === 1 ? (i === bgIdx ? 1 : 0) : 0, transition: 'opacity 2.5s ease', willChange: 'opacity' }} />
-      ))}
+      ) : null)}
 
       {/* Step 2: selected bg as fixed full-screen */}
       {step === 2 && (
@@ -310,19 +393,33 @@ export default function Home() {
 
       {/* Petals */}
       {mounted && PETALS.map(p => (
-        <div key={p.id} style={{ position: 'fixed', left: p.left, top: '-28px', fontSize: p.size, zIndex: 1, pointerEvents: 'none', opacity: .35, animation: `floatDown ${p.dur} ${p.delay} linear infinite` }}>{p.char}</div>
+        <div key={p.id} style={{ position: 'fixed', left: p.left, top: '-28px', fontSize: p.size, zIndex: 1, pointerEvents: 'none', opacity: .35, animation: `floatDown ${p.dur} ${p.delay} linear infinite`, willChange: 'transform' }}>{p.char}</div>
       ))}
 
       {/* ── Content */}
       <div style={{ position: 'relative', zIndex: 2, height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: step === 2 ? '0' : '0 16px' }}>
 
-        {/* Brand */}
-        <div className="su" style={{ textAlign: 'center', marginBottom: step === 2 ? 6 : 18, padding: step === 2 ? '12px 0 0' : '0' }}>
+        {/* Brand / Header */}
+        <div className="su" style={{ textAlign: 'center', marginBottom: step === 2 ? 6 : 18, padding: step === 2 ? '12px 0 0' : '0', position: 'relative', width: '100%', maxWidth: 440 }}>
+          {step === 1 && (
+            <button
+              onClick={() => { setStep('mine'); if (session?.userId) loadMyWishes(session.userId); }}
+              style={{ position: 'absolute', right: 0, top: 0, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)', borderRadius: 20, padding: '6px 14px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer', zIndex: 10, display: 'flex', alignItems: 'center', gap: 6 }}
+            >
+              {session ? `👤 ${session.username}` : 'My Wishes'}
+            </button>
+          )}
+
           <p style={{ fontSize: 10, letterSpacing: '4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 7 }}>✦ wishit ✦</p>
-          {step !== 2 && (
+          {step !== 2 && step !== 'mine' && (
             <h1 style={{ fontFamily: 'Playfair Display,serif', fontSize: 'clamp(26px,5vw,36px)', fontWeight: 700, lineHeight: 1.15, textShadow: '0 2px 20px rgba(0,0,0,.4)' }}>
               {step === 1 && <><span>Send a wish</span><br /><em style={{ fontWeight: 400 }}>from the heart</em></>}
               {step === 3 && <em style={{ fontWeight: 400 }}>Your wish is ready</em>}
+            </h1>
+          )}
+          {step === 'mine' && (
+            <h1 style={{ fontFamily: 'Playfair Display,serif', fontSize: 'clamp(26px,5vw,36px)', fontWeight: 700, lineHeight: 1.15, textShadow: '0 2px 20px rgba(0,0,0,.4)' }}>
+              <em style={{ fontWeight: 400 }}>My Wishes</em>
             </h1>
           )}
         </div>
@@ -360,7 +457,7 @@ export default function Home() {
               {sortedBgs.map(bg => (
                 <button key={bg.id} className={`bg-thumb${selBg === bg.id ? ' sel' : ''}${bg.cats.includes(category) && selBg !== bg.id ? ' cat-match' : ''}`}
                   onClick={() => setSelBg(bg.id)} onMouseEnter={() => setHoverBg(bg.id)} onMouseLeave={() => setHoverBg(null)}>
-                  <img src={bg.src} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                  <img src={bg.src} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
                   {selBg === bg.id && <div style={{ position: 'absolute', inset: 0, background: 'rgba(201,114,107,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700 }}>✓</div>}
                 </button>
               ))}
@@ -457,7 +554,7 @@ export default function Home() {
           <div className="glass su" style={{ width: '100%', maxWidth: 420, textAlign: 'center' }}>
             <div className="strip" />
             <div style={{ padding: '26px 22px 28px' }}>
-              <div style={{ fontSize: 44, marginBottom: 12, display: 'inline-block', animation: 'pulse 2s ease-in-out infinite' }}>🎀</div>
+              <div style={{ fontSize: 44, marginBottom: 12, display: 'inline-block', animation: 'pulse 2s ease-in-out infinite', willChange: 'transform' }}>🎀</div>
               <h2 style={{ fontFamily: 'Playfair Display,serif', fontSize: 21, fontWeight: 700, marginBottom: 7 }}>Your wish is ready!</h2>
               <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, marginBottom: 18, lineHeight: 1.6 }}>
                 Share this link with your special someone
@@ -510,10 +607,108 @@ export default function Home() {
               )}
 
               <div style={{ height: 1, background: 'rgba(255,255,255,0.1)', margin: '14px 0' }} />
+
+              {/* AUTH PANEL (Step 3 optional signup) */}
+              <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: 14, textAlign: 'left', marginBottom: 14 }}>
+                {authDone || session?.userId ? (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    <p style={{ fontSize: 13, color: 'rgba(150,255,180,0.9)', margin: 0 }}>✓ Saved to <strong>{session?.username}</strong>'s profile</p>
+                    <button onClick={logout} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}>Logout</button>
+                  </div>
+                ) : (
+                  <>
+                    <p style={{ fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.8)', marginBottom: 10, textAlign: 'center' }}>💾 Save this wish to your profile</p>
+                    <div style={{ display: 'flex', marginBottom: 10, background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 4 }}>
+                      <div className={`auth-tab ${authTab === 'login' ? 'active' : ''}`} onClick={() => { setAuthTab('login'); setAuthError(''); }}>Log In</div>
+                      <div className={`auth-tab ${authTab === 'signup' ? 'active' : ''}`} onClick={() => { setAuthTab('signup'); setAuthError(''); }}>Sign Up</div>
+                    </div>
+                    <form onSubmit={handleAuth}>
+                      <input type="text" className="auth-inp" placeholder="Username" value={authForm.username} onChange={e => setAuthForm(f => ({ ...f, username: e.target.value }))} required minLength={3} />
+                      <input type="password" className="auth-inp" placeholder="Password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} required minLength={6} />
+                      {authError && <p style={{ color: 'rgba(255,100,100,0.9)', fontSize: 11, marginBottom: 8, textAlign: 'center' }}>{authError}</p>}
+                      <button type="submit" disabled={authLoading} style={{ width: '100%', padding: '10px', background: 'rgba(255,255,255,0.9)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 13, cursor: 'pointer', opacity: authLoading ? 0.7 : 1 }}>
+                        {authLoading ? '...' : (authTab === 'login' ? 'Log In' : 'Create Account')}
+                      </button>
+                    </form>
+                  </>
+                )}
+              </div>
+
               <button style={{ padding: '10px 22px', borderRadius: 10, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.75)', fontSize: 13, cursor: 'pointer' }}
-                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(1); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); }}>
+                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(1); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); setAuthDone(false); }}>
                 + Create another wish
               </button>
+            </div>
+          </div>
+        )}
+
+        {/* ── STEP MINE (My Wishes) ── */}
+        {step === 'mine' && (
+          <div className="glass su" style={{ width: '100%', maxWidth: 440, minHeight: 400, display: 'flex', flexDirection: 'column' }}>
+            <div className="strip" />
+            <div style={{ padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+              <button onClick={() => setStep(1)} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 8, color: 'rgba(255,255,255,0.7)', fontSize: 12, cursor: 'pointer', padding: '5px 11px' }}>← Back</button>
+              {session && <button onClick={logout} style={{ background: 'none', border: 'none', color: 'rgba(255,255,255,0.5)', fontSize: 12, cursor: 'pointer', textDecoration: 'underline' }}>Logout</button>}
+            </div>
+
+            <div style={{ padding: 20, flex: 1, overflowY: 'auto' }}>
+              {!session ? (
+                <div style={{ textAlign: 'center', padding: '40px 0' }}>
+                  <p style={{ color: 'rgba(255,255,255,0.5)', fontSize: 14, marginBottom: 20 }}>Log in to see your past wishes.</p>
+                  <div style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: 12, padding: 16, textAlign: 'left' }}>
+                    <div style={{ display: 'flex', marginBottom: 12, background: 'rgba(255,255,255,0.05)', borderRadius: 8, padding: 4 }}>
+                      <div className={`auth-tab ${authTab === 'login' ? 'active' : ''}`} onClick={() => { setAuthTab('login'); setAuthError(''); }}>Log In</div>
+                      <div className={`auth-tab ${authTab === 'signup' ? 'active' : ''}`} onClick={() => { setAuthTab('signup'); setAuthError(''); }}>Sign Up</div>
+                    </div>
+                    <form onSubmit={async (e) => { await handleAuth(e); if (session?.userId) loadMyWishes(session.userId); }}>
+                      <input type="text" className="auth-inp" placeholder="Username" value={authForm.username} onChange={e => setAuthForm(f => ({ ...f, username: e.target.value }))} required minLength={3} />
+                      <input type="password" className="auth-inp" placeholder="Password" value={authForm.password} onChange={e => setAuthForm(f => ({ ...f, password: e.target.value }))} required minLength={6} />
+                      {authError && <p style={{ color: 'rgba(255,100,100,0.9)', fontSize: 11, marginBottom: 8, textAlign: 'center' }}>{authError}</p>}
+                      <button type="submit" disabled={authLoading} style={{ width: '100%', padding: '12px', background: 'rgba(255,255,255,0.9)', color: '#000', border: 'none', borderRadius: 8, fontWeight: 700, fontSize: 14, cursor: 'pointer' }}>
+                        {authLoading ? '...' : (authTab === 'login' ? 'Log In' : 'Create Account')}
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              ) : myWishesLoading ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>Loading wishes...</div>
+              ) : myWishes.length === 0 ? (
+                <div style={{ textAlign: 'center', padding: '40px 0', color: 'rgba(255,255,255,0.4)', fontSize: 14 }}>
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>✨</div>
+                  You haven't made any wishes yet.
+                </div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {myWishes.map(w => {
+                    const isExpired = w.expires_at && new Date(w.expires_at) < new Date();
+                    const icon = CATEGORIES.find(c => c.value === w.category)?.icon || '💌';
+                    return (
+                      <div key={w.id} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 14, display: 'flex', gap: 14, alignItems: 'center' }}>
+                        <div style={{ width: 44, height: 44, borderRadius: 10, background: 'rgba(255,255,255,0.1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22, flexShrink: 0 }}>
+                          {icon}
+                        </div>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>To: {w.receiver || 'Someone special'}</p>
+                          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{new Date(w.created_at).toLocaleDateString()}</p>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+                          {isExpired ? (
+                            <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, background: 'rgba(255,100,100,0.15)', color: 'rgba(255,150,150,0.9)', border: '1px solid rgba(255,100,100,0.2)' }}>EXPIRED</span>
+                          ) : (
+                            <button onClick={() => {
+                              const url = `${window.location.origin}/wish/${w.id}`;
+                              navigator.clipboard.writeText(url);
+                              alert('Link copied!');
+                            }} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 6, padding: '6px 12px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                              Copy Link
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
             </div>
           </div>
         )}

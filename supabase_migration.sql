@@ -21,3 +21,16 @@ CREATE TABLE IF NOT EXISTS wishes (
 -- Optional: disable Row Level Security so the service role key can read/write freely
 -- (it bypasses RLS anyway, but this also allows anon reads if needed)
 ALTER TABLE wishes DISABLE ROW LEVEL SECURITY;
+
+-- Custom users table (username + hashed password — no Supabase Auth)
+CREATE TABLE IF NOT EXISTS users (
+  id            TEXT PRIMARY KEY,
+  username      TEXT NOT NULL UNIQUE,
+  password_hash TEXT NOT NULL,
+  created_at    TIMESTAMPTZ DEFAULT NOW()
+);
+
+ALTER TABLE users DISABLE ROW LEVEL SECURITY;
+
+-- Link wishes to users (optional — anonymous wishes have NULL user_id)
+ALTER TABLE wishes ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE SET NULL;
