@@ -51,10 +51,27 @@ const BGS = [
 ];
 
 const FONTS = [
-  { id: 'playfair', label: 'Playfair', style: 'var(--font-playfair), serif' },
-  { id: 'dancing', label: 'Dancing', style: 'var(--font-dancing), cursive' },
-  { id: 'sacramento', label: 'Sacramento', style: 'var(--font-sacramento), cursive' },
-  { id: 'dmsans', label: 'Modern', style: 'var(--font-dm-sans), sans-serif' },
+  { id: 'playfair', label: 'Playfair', style: 'var(--font-playfair), serif', italic: true },
+  { id: 'cormorant', label: 'Cormorant', style: 'var(--font-cormorant), serif', italic: true },
+  { id: 'lora', label: 'Lora', style: 'var(--font-lora), serif', italic: true },
+  { id: 'cinzel', label: 'Cinzel', style: 'var(--font-cinzel), serif', italic: false },
+  { id: 'dancing', label: 'Dancing', style: 'var(--font-dancing), cursive', italic: false },
+  { id: 'sacramento', label: 'Sacramento', style: 'var(--font-sacramento), cursive', italic: false },
+  { id: 'greatvibes', label: 'Great Vibes', style: 'var(--font-great-vibes), cursive', italic: false },
+  { id: 'dmsans', label: 'Modern', style: 'var(--font-dm-sans), sans-serif', italic: false },
+];
+
+const FONT_COLORS = [
+  { id: 'white', label: 'White', hex: '#FFFFFF' },
+  { id: 'cream', label: 'Cream', hex: '#FFF8EE' },
+  { id: 'gold', label: 'Gold', hex: '#F5D07A' },
+  { id: 'rose', label: 'Rose', hex: '#F4A8B0' },
+  { id: 'blush', label: 'Blush', hex: '#E8C4B8' },
+  { id: 'lilac', label: 'Lilac', hex: '#C9B8E8' },
+  { id: 'mint', label: 'Mint', hex: '#A8E8C4' },
+  { id: 'sky', label: 'Sky', hex: '#A8D4F5' },
+  { id: 'peach', label: 'Peach', hex: '#F5C4A8' },
+  { id: 'silver', label: 'Silver', hex: '#C8D6E0' },
 ];
 
 const EXPIRY_OPTIONS = [
@@ -79,6 +96,40 @@ const PETALS = Array.from({ length: 12 }, (_, i) => ({
   size: 11 + (i % 4) * 4, char: ['🌸', '✦', '·', '♡', '✿'][i % 5],
 }));
 
+// Prebuilt royalty-free music tracks
+const MUSIC_TRACKS = [
+  {
+    id: 'birthday',
+    label: '🎂 Happy Birthday',
+    src: 'https://cdn.pixabay.com/audio/2022/03/15/audio_3d0f6e52d7.mp3',
+    cats: ['birthday'],
+  },
+  {
+    id: 'love',
+    label: '🎵 Romantic Piano',
+    src: 'https://cdn.pixabay.com/audio/2023/09/04/audio_b1c90e5484.mp3',
+    cats: ['love', 'anniversary'],
+  },
+  {
+    id: 'cheerful',
+    label: '✨ Cheerful Bells',
+    src: 'https://cdn.pixabay.com/audio/2022/10/30/audio_b99e0d6d5f.mp3',
+    cats: ['congratulations', 'graduation', 'baby_shower', 'new_year'],
+  },
+  {
+    id: 'calm',
+    label: '🌿 Calm Acoustic',
+    src: 'https://cdn.pixabay.com/audio/2022/10/25/audio_946d33eabb.mp3',
+    cats: ['parents', 'get_well', 'farewell', 'friendship'],
+  },
+  {
+    id: 'celebration',
+    label: '🎆 Fanfare',
+    src: 'https://cdn.pixabay.com/audio/2022/11/22/audio_febc508520.mp3',
+    cats: ['congratulations', 'new_year', 'graduation'],
+  },
+];
+
 export default function Home() {
   const [step, setStep] = useState(1);
   const [category, setCat] = useState('');
@@ -96,6 +147,8 @@ export default function Home() {
   const [expiryDays, setExpiryDays] = useState(1);
   const [scheduledAt, setScheduledAt] = useState('');
   const [showQr, setShowQr] = useState(false);
+  const [selMusic, setSelMusic] = useState(null);
+  const [fontColor, setFontColor] = useState('#FFFFFF'); // default white
   const qrCanvasRef = useRef(null);
 
   // Auth state
@@ -173,6 +226,9 @@ export default function Home() {
     // Auto-select best matching background
     const catBg = BGS.find(b => b.cats.includes(c.value));
     if (catBg) setSelBg(catBg.id);
+    // Auto-suggest music for this category
+    const catTrack = MUSIC_TRACKS.find(t => t.cats.includes(c.value));
+    setSelMusic(catTrack ? catTrack.id : null);
     setStep(2);
   };
 
@@ -197,6 +253,8 @@ export default function Home() {
           font, overlay_opacity: overlayOpacity,
           expires_at, scheduled_at,
           user_id: session?.userId || null,
+          music: selMusic || null,
+          font_color: fontColor || null,
         }),
       });
       const data = await res.json();
@@ -285,6 +343,7 @@ export default function Home() {
   const bgSrc = BGS.find(b => b.id === activeBgId)?.src;
   const wallBg = BGS[bgIdx].src;
   const fontStyle = FONTS.find(f => f.id === font)?.style || FONTS[0].style;
+  const fontItalic = FONTS.find(f => f.id === font)?.italic ?? true;
 
   // Filtered and sorted backgrounds for the picker (category matches first)
   const sortedBgs = category
@@ -334,6 +393,13 @@ export default function Home() {
         .overlay-inp:focus{border-bottom-color:rgba(255,255,255,0.75)}
         .overlay-inp::placeholder{color:rgba(255,255,255,0.38)}
 
+        /* Premium From/To card inputs */
+        .name-card{background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:12px;padding:10px 13px;display:flex;flex-direction:column;gap:3px;transition:border-color .22s,background .22s,box-shadow .22s;cursor:text}
+        .name-card:focus-within{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.38);box-shadow:0 0 0 3px rgba(255,255,255,0.06)}
+        .name-card-label{font-size:9px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:rgba(255,255,255,0.4);line-height:1}
+        .name-card-inp{background:transparent;border:none;outline:none;color:#fff;font-size:14px;font-family:inherit;width:100%;padding:0;line-height:1.4}
+        .name-card-inp::placeholder{color:rgba(255,255,255,0.3)}
+
         .overlay-msg{background:transparent;border:none;color:#fff;font-size:15px;font-style:italic;line-height:1.8;outline:none;padding:0;width:100%;flex:1}
         .overlay-msg::placeholder{color:rgba(255,255,255,0.38);font-style:italic}
 
@@ -367,8 +433,23 @@ export default function Home() {
         .auth-inp{background:rgba(0,0,0,0.2);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:10px 12px;color:#fff;font-size:13px;width:100%;margin-bottom:8px;outline:none;transition:border-color .2s}
         .auth-inp:focus{border-color:rgba(255,255,255,0.3)}
 
-        .bg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;width:100%}
+        .bg-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;width:100%}
+        .bg-thumb{height:40px;border-radius:7px;overflow:hidden;cursor:pointer;border:2px solid transparent;padding:0;position:relative;transition:transform .18s,border-color .18s,box-shadow .18s;background:#111}
+        .bg-thumb:hover{transform:scale(1.06);border-color:rgba(255,255,255,0.45)}
+        .bg-thumb.sel{border-color:#fff;box-shadow:0 0 0 3px rgba(255,255,255,0.25)}
+        .bg-thumb.cat-match{border-color:rgba(201,114,107,0.7);box-shadow:0 0 0 2px rgba(201,114,107,0.25)}
 
+        /* Step 2 two-panel layout */
+        .step2-shell{width:100%;max-width:900px;display:flex;flex-direction:column;gap:10px;padding:0 12px;overflow-y:auto;max-height:calc(100dvh - 80px);scrollbar-width:none}
+        .step2-shell::-webkit-scrollbar{display:none}
+        .step2-panels{display:grid;grid-template-columns:1fr;gap:10px}
+        .step2-left{display:flex;flex-direction:column;gap:8px}
+        .step2-right{display:flex;flex-direction:column;gap:8px}
+        @media(min-width:640px){
+          .step2-shell{overflow:hidden;max-height:none;padding:0 16px}
+          .step2-panels{grid-template-columns:190px 1fr;align-items:start;gap:14px}
+          .step2-right{gap:7px}
+        }
         .scroll-content{overflow-y:auto;max-height:calc(100dvh - 120px);padding:0 16px 16px;display:flex;flex-direction:column;gap:10px;scrollbar-width:none}
         .scroll-content::-webkit-scrollbar{display:none}
       `}</style>
@@ -442,110 +523,188 @@ export default function Home() {
           </div>
         )}
 
-        {/* ── STEP 2: write ON the image ── */}
+        {/* ── STEP 2: two-panel layout ── */}
         {step === 2 && (
-          <div className="su scroll-content" style={{ width: '100%', maxWidth: 460 }}>
+          <div className="su step2-shell">
 
-            {/* Top bar: back button */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+            {/* Top bar */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, paddingTop: 10, flexShrink: 0 }}>
               <button onClick={() => setStep(1)} style={{ background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.18)', borderRadius: 8, color: 'rgba(255,255,255,0.7)', fontSize: 12, cursor: 'pointer', padding: '5px 11px', whiteSpace: 'nowrap', flexShrink: 0 }}>← Back</button>
-              <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase' }}>Background — <span style={{ color: 'rgba(201,114,107,0.8)' }}>pink border = best match</span></p>
+              <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase' }}>Background — <span style={{ color: 'rgba(201,114,107,0.8)' }}>pink = best match</span></p>
             </div>
 
-            {/* All 15 backgrounds in a 5-column grid */}
-            <div className="bg-grid">
-              {sortedBgs.map(bg => (
-                <button key={bg.id} className={`bg-thumb${selBg === bg.id ? ' sel' : ''}${bg.cats.includes(category) && selBg !== bg.id ? ' cat-match' : ''}`}
-                  onClick={() => setSelBg(bg.id)} onMouseEnter={() => setHoverBg(bg.id)} onMouseLeave={() => setHoverBg(null)}>
-                  <img src={bg.src} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
-                  {selBg === bg.id && <div style={{ position: 'absolute', inset: 0, background: 'rgba(201,114,107,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 700 }}>✓</div>}
-                </button>
-              ))}
-            </div>
+            {/* Two-panel area */}
+            <div className="step2-panels">
 
-            {/* Postcard */}
-            <form onSubmit={submit} style={{ display: 'flex', flexDirection: 'column', gap: 0 }}>
-
-              {/* From / To */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 14 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 4 }}>From</label>
-                  <input className="overlay-inp" placeholder="Your name" value={form.sender} onChange={e => setForm(f => ({ ...f, sender: e.target.value }))} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.5)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 4 }}>To</label>
-                  <input className="overlay-inp" placeholder="Their name" value={form.receiver} onChange={e => setForm(f => ({ ...f, receiver: e.target.value }))} />
-                </div>
-              </div>
-
-              {/* Message */}
-              <div style={{ position: 'relative', marginBottom: 12 }}>
-                <div style={{ position: 'absolute', top: -2, left: -2, fontSize: 40, color: 'rgba(255,255,255,0.12)', fontFamily: 'Playfair Display,serif', lineHeight: 1, pointerEvents: 'none' }}>"</div>
-                <textarea
-                  className="overlay-msg"
-                  rows={5}
-                  placeholder="Write your message here…"
-                  value={form.message}
-                  required
-                  onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-                  style={{ paddingLeft: 18, fontFamily: fontStyle }}
-                />
-              </div>
-
-              {/* Font picker */}
-              <div style={{ marginBottom: 12 }}>
-                <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 7 }}>Font style</p>
-                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
-                  {FONTS.map(f => (
-                    <button key={f.id} type="button" className={`font-btn${font === f.id ? ' sel' : ''}`}
-                      onClick={() => setFont(f.id)}
-                      style={{ fontFamily: f.style }}>
-                      {f.label}
+              {/* LEFT: background picker */}
+              <div className="step2-left">
+                <div className="bg-grid">
+                  {sortedBgs.map(bg => (
+                    <button key={bg.id} className={`bg-thumb${selBg === bg.id ? ' sel' : ''}${bg.cats.includes(category) && selBg !== bg.id ? ' cat-match' : ''}`}
+                      onClick={() => setSelBg(bg.id)} onMouseEnter={() => setHoverBg(bg.id)} onMouseLeave={() => setHoverBg(null)}>
+                      <img src={bg.src} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      {selBg === bg.id && <div style={{ position: 'absolute', inset: 0, background: 'rgba(201,114,107,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700 }}>✓</div>}
                     </button>
                   ))}
                 </div>
               </div>
 
-              {/* Overlay brightness */}
-              <div style={{ marginBottom: 12 }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
-                  <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase' }}>Background darkness</p>
-                  <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{Math.round(overlayOpacity * 100)}%</span>
-                </div>
-                <input type="range" className="slider" min="0.15" max="0.85" step="0.05"
-                  value={overlayOpacity} onChange={e => setOverlayOpacity(parseFloat(e.target.value))} />
-              </div>
+              {/* RIGHT: form fields */}
+              <div className="step2-right">
+                <form onSubmit={submit} style={{ display: 'contents' }}>
 
-              {/* Passkey + Expiry row */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 10 }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 5 }}>Passkey (optional)</label>
-                  <input type="password" className="option-inp" placeholder="🔐 Secret passkey"
-                    value={form.passkey} onChange={e => setForm(f => ({ ...f, passkey: e.target.value }))} />
-                </div>
-                <div>
-                  <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 5 }}>Link expires</label>
-                  <select className="option-inp" value={expiryDays} onChange={e => setExpiryDays(parseInt(e.target.value))}>
-                    {EXPIRY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
-                  </select>
-                </div>
-              </div>
+                  {/* From / To — premium card inputs */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+                    <div className="name-card" onClick={e => e.currentTarget.querySelector('input').focus()}>
+                      <span className="name-card-label">✦ From</span>
+                      <input
+                        className="name-card-inp"
+                        placeholder="Your name"
+                        value={form.sender}
+                        onChange={e => setForm(f => ({ ...f, sender: e.target.value }))}
+                      />
+                    </div>
+                    <div className="name-card" onClick={e => e.currentTarget.querySelector('input').focus()}>
+                      <span className="name-card-label">✦ To</span>
+                      <input
+                        className="name-card-inp"
+                        placeholder="Their name"
+                        value={form.receiver}
+                        onChange={e => setForm(f => ({ ...f, receiver: e.target.value }))}
+                      />
+                    </div>
+                  </div>
 
-              {/* Schedule */}
-              <div style={{ marginBottom: 12 }}>
-                <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 5 }}>Schedule unlock (optional)</label>
-                <input type="datetime-local" className="option-inp"
-                  value={scheduledAt}
-                  min={new Date().toISOString().slice(0, 16)}
-                  onChange={e => setScheduledAt(e.target.value)}
-                  style={{ colorScheme: 'dark' }} />
-              </div>
+                  {/* Message */}
+                  <div style={{ position: 'relative' }}>
+                    <div style={{ position: 'absolute', top: -2, left: -2, fontSize: 36, color: 'rgba(255,255,255,0.08)', fontFamily: 'Playfair Display,serif', lineHeight: 1, pointerEvents: 'none' }}>"</div>
+                    <textarea
+                      className="overlay-msg"
+                      rows={4}
+                      placeholder="Write your message here…"
+                      value={form.message}
+                      required
+                      onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
+                      style={{ paddingLeft: 18, fontFamily: fontStyle, color: fontColor, fontStyle: fontItalic ? 'italic' : 'normal' }}
+                    />
+                  </div>
 
-              {/* Submit */}
-              <button className="btn-main" type="submit" disabled={loading}>
-                {loading ? '…' : 'Create Wish  →'}
-              </button>
-            </form>
+                  {/* Font + Colour + Overlay */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 7 }}>
+                    {/* Font label + pills */}
+                    <div>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 5 }}>Font</p>
+                      <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                        {FONTS.map(f => (
+                          <button key={f.id} type="button"
+                            onClick={() => setFont(f.id)}
+                            style={{
+                              padding: '5px 10px', borderRadius: 8, border: '1px solid',
+                              borderColor: font === f.id ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.15)',
+                              background: font === f.id ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.05)',
+                              color: font === f.id ? '#fff' : 'rgba(255,255,255,0.6)',
+                              fontSize: 12, cursor: 'pointer', transition: 'all .2s', fontFamily: f.style,
+                              fontStyle: f.italic ? 'italic' : 'normal',
+                              boxShadow: font === f.id ? '0 0 0 2px rgba(255,255,255,0.12)' : 'none',
+                            }}>
+                            {f.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {/* Colour swatches */}
+                    <div>
+                      <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 5 }}>Text colour</p>
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                        {FONT_COLORS.map(c => (
+                          <button key={c.id} type="button" title={c.label}
+                            onClick={() => setFontColor(c.hex)}
+                            style={{
+                              width: 20, height: 20, borderRadius: '50%',
+                              background: c.hex,
+                              border: fontColor === c.hex ? '2px solid #fff' : '2px solid rgba(255,255,255,0.18)',
+                              cursor: 'pointer', padding: 0, flexShrink: 0,
+                              boxShadow: fontColor === c.hex ? `0 0 0 3px rgba(255,255,255,0.25), 0 0 8px ${c.hex}55` : 'none',
+                              transition: 'all .15s',
+                            }} />
+                        ))}
+                      </div>
+                    </div>
+                    {/* Darkness slider */}
+                    <div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
+                        <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase' }}>Darkness</p>
+                        <span style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>{Math.round(overlayOpacity * 100)}%</span>
+                      </div>
+                      <input type="range" className="slider" min="0.15" max="0.85" step="0.05"
+                        value={overlayOpacity} onChange={e => setOverlayOpacity(parseFloat(e.target.value))} />
+                    </div>
+                  </div>
+
+                  {/* Passkey + Expiry */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 4 }}>Passkey (optional)</label>
+                      <input type="password" className="option-inp" placeholder="🔐 Secret" style={{ padding: '7px 10px', fontSize: 12 }}
+                        value={form.passkey} onChange={e => setForm(f => ({ ...f, passkey: e.target.value }))} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 4 }}>Link expires</label>
+                      <select className="option-inp" style={{ padding: '7px 10px', fontSize: 12 }} value={expiryDays} onChange={e => setExpiryDays(parseInt(e.target.value))}>
+                        {EXPIRY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  {/* Schedule */}
+                  <div>
+                    <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 4 }}>Schedule unlock (optional)</label>
+                    <input type="datetime-local" className="option-inp"
+                      value={scheduledAt}
+                      min={new Date().toISOString().slice(0, 16)}
+                      onChange={e => setScheduledAt(e.target.value)}
+                      style={{ padding: '7px 10px', fontSize: 12, colorScheme: 'dark' }} />
+                  </div>
+
+                  {/* Music picker */}
+                  <div>
+                    <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 5 }}>🎵 Music</p>
+                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+                      <button type="button" onClick={() => setSelMusic(null)}
+                        style={{
+                          padding: '5px 10px', borderRadius: 20, border: '1px solid',
+                          borderColor: selMusic === null ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.15)',
+                          background: selMusic === null ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)',
+                          color: selMusic === null ? '#fff' : 'rgba(255,255,255,0.55)',
+                          fontSize: 11, cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
+                        }}>🔇 None</button>
+                      {MUSIC_TRACKS.map(t => {
+                        const isSel = selMusic === t.id;
+                        const isSugg = !selMusic && t.cats.includes(category);
+                        return (
+                          <button key={t.id} type="button" onClick={() => setSelMusic(t.id)}
+                            style={{
+                              padding: '5px 10px', borderRadius: 20, border: '1px solid',
+                              borderColor: isSel ? '#fff' : isSugg ? 'rgba(201,114,107,0.6)' : 'rgba(255,255,255,0.15)',
+                              background: isSel ? 'rgba(255,255,255,0.18)' : isSugg ? 'rgba(201,114,107,0.12)' : 'rgba(255,255,255,0.06)',
+                              color: isSel ? '#fff' : isSugg ? 'rgba(255,210,195,0.9)' : 'rgba(255,255,255,0.55)',
+                              fontSize: 11, cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
+                              boxShadow: isSel ? '0 0 0 2px rgba(255,255,255,0.2)' : 'none',
+                            }}>{t.label}</button>
+                        );
+                      })}
+                    </div>
+                    {selMusic && <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>✓ Music plays when wish opens</p>}
+                  </div>
+
+                  {/* Submit */}
+                  <button className="btn-main" type="submit" disabled={loading} style={{ marginTop: 2 }}>
+                    {loading ? '…' : 'Create Wish  →'}
+                  </button>
+
+                </form>
+              </div>
+            </div>
           </div>
         )}
 
@@ -635,7 +794,7 @@ export default function Home() {
               </div>
 
               <button style={{ padding: '10px 22px', borderRadius: 10, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.75)', fontSize: 13, cursor: 'pointer' }}
-                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(1); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); setAuthDone(false); }}>
+                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(1); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); setAuthDone(false); setSelMusic(null); setFontColor('#FFFFFF'); }}>
                 + Create another wish
               </button>
             </div>

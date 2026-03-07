@@ -34,3 +34,9 @@ ALTER TABLE users DISABLE ROW LEVEL SECURITY;
 
 -- Link wishes to users (optional — anonymous wishes have NULL user_id)
 ALTER TABLE wishes ADD COLUMN IF NOT EXISTS user_id TEXT REFERENCES users(id) ON DELETE SET NULL;
+
+-- Background music track ID chosen by sender (optional)
+ALTER TABLE wishes ADD COLUMN IF NOT EXISTS music TEXT DEFAULT NULL;
+
+-- Font colour (CSS color value) chosen by sender
+ALTER TABLE wishes ADD COLUMN IF NOT EXISTS font_color TEXT DEFAULT NULL;
