@@ -96,39 +96,6 @@ const PETALS = Array.from({ length: 12 }, (_, i) => ({
   size: 11 + (i % 4) * 4, char: ['🌸', '✦', '·', '♡', '✿'][i % 5],
 }));
 
-// Prebuilt royalty-free music tracks
-const MUSIC_TRACKS = [
-  {
-    id: 'birthday',
-    label: '🎂 Happy Birthday',
-    src: 'https://cdn.pixabay.com/audio/2022/03/15/audio_3d0f6e52d7.mp3',
-    cats: ['birthday'],
-  },
-  {
-    id: 'love',
-    label: '🎵 Romantic Piano',
-    src: 'https://cdn.pixabay.com/audio/2023/09/04/audio_b1c90e5484.mp3',
-    cats: ['love', 'anniversary'],
-  },
-  {
-    id: 'cheerful',
-    label: '✨ Cheerful Bells',
-    src: 'https://cdn.pixabay.com/audio/2022/10/30/audio_b99e0d6d5f.mp3',
-    cats: ['congratulations', 'graduation', 'baby_shower', 'new_year'],
-  },
-  {
-    id: 'calm',
-    label: '🌿 Calm Acoustic',
-    src: 'https://cdn.pixabay.com/audio/2022/10/25/audio_946d33eabb.mp3',
-    cats: ['parents', 'get_well', 'farewell', 'friendship'],
-  },
-  {
-    id: 'celebration',
-    label: '🎆 Fanfare',
-    src: 'https://cdn.pixabay.com/audio/2022/11/22/audio_febc508520.mp3',
-    cats: ['congratulations', 'new_year', 'graduation'],
-  },
-];
 
 export default function Home() {
   const [step, setStep] = useState(1);
@@ -147,11 +114,8 @@ export default function Home() {
   const [expiryDays, setExpiryDays] = useState(1);
   const [scheduledAt, setScheduledAt] = useState('');
   const [showQr, setShowQr] = useState(false);
-  const [selMusic, setSelMusic] = useState(null);
   const [fontColor, setFontColor] = useState('#FFFFFF'); // default white
   const qrCanvasRef = useRef(null);
-  const [playingPreview, setPlayingPreview] = useState(false);
-  const previewAudioRef = useRef(null);
 
   // Auth state
   const [session, setSession] = useState(null); // { userId, username }
@@ -164,24 +128,6 @@ export default function Home() {
   const [myWishesLoading, setMyWishesLoading] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
-
-  // Stop playing if they change the track
-  useEffect(() => {
-    if (previewAudioRef.current) {
-      previewAudioRef.current.pause();
-      setPlayingPreview(false);
-    }
-  }, [selMusic]);
-
-  const togglePreview = () => {
-    if (!previewAudioRef.current) return;
-    if (playingPreview) {
-      previewAudioRef.current.pause();
-      setPlayingPreview(false);
-    } else {
-      previewAudioRef.current.play().then(() => setPlayingPreview(true)).catch(() => {});
-    }
-  };
 
   // Restore session from localStorage
   useEffect(() => {
@@ -246,9 +192,6 @@ export default function Home() {
     // Auto-select best matching background
     const catBg = BGS.find(b => b.cats.includes(c.value));
     if (catBg) setSelBg(catBg.id);
-    // Auto-suggest music for this category
-    const catTrack = MUSIC_TRACKS.find(t => t.cats.includes(c.value));
-    setSelMusic(catTrack ? catTrack.id : null);
     setStep(2);
   };
 
@@ -273,7 +216,6 @@ export default function Home() {
           font, overlay_opacity: overlayOpacity,
           expires_at, scheduled_at,
           user_id: session?.userId || null,
-          music: selMusic || null,
           font_color: fontColor || null,
         }),
       });
@@ -686,44 +628,6 @@ export default function Home() {
                       style={{ padding: '7px 10px', fontSize: 12, colorScheme: 'dark' }} />
                   </div>
 
-                  {/* Music picker */}
-                  <div>
-                    <p style={{ fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 5 }}>🎵 Music</p>
-                    <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
-                      <button type="button" onClick={() => setSelMusic(null)}
-                        style={{
-                          padding: '5px 10px', borderRadius: 20, border: '1px solid',
-                          borderColor: selMusic === null ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.15)',
-                          background: selMusic === null ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.06)',
-                          color: selMusic === null ? '#fff' : 'rgba(255,255,255,0.55)',
-                          fontSize: 11, cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
-                        }}>🔇 None</button>
-                      {MUSIC_TRACKS.map(t => {
-                        const isSel = selMusic === t.id;
-                        const isSugg = !selMusic && t.cats.includes(category);
-                        return (
-                          <button key={t.id} type="button" onClick={() => setSelMusic(t.id)}
-                            style={{
-                              padding: '5px 10px', borderRadius: 20, border: '1px solid',
-                              borderColor: isSel ? '#fff' : isSugg ? 'rgba(201,114,107,0.6)' : 'rgba(255,255,255,0.15)',
-                              background: isSel ? 'rgba(255,255,255,0.18)' : isSugg ? 'rgba(201,114,107,0.12)' : 'rgba(255,255,255,0.06)',
-                              color: isSel ? '#fff' : isSugg ? 'rgba(255,210,195,0.9)' : 'rgba(255,255,255,0.55)',
-                              fontSize: 11, cursor: 'pointer', transition: 'all .2s', fontFamily: 'inherit',
-                              boxShadow: isSel ? '0 0 0 2px rgba(255,255,255,0.2)' : 'none',
-                            }}>{t.label}</button>
-                        );
-                      })}
-                    </div>
-                    {selMusic && (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
-                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0 }}>✓ Music plays when wish opens</p>
-                        <button type="button" onClick={togglePreview} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, padding: '4px 10px', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}>
-                          {playingPreview ? '⏸ Pause' : '▶ Preview'}
-                        </button>
-                        <audio ref={previewAudioRef} src={MUSIC_TRACKS.find(t => t.id === selMusic)?.src} onEnded={() => setPlayingPreview(false)} style={{ display: 'none' }} />
-                      </div>
-                    )}
-                  </div>
 
                   {/* Submit */}
                   <button className="btn-main" type="submit" disabled={loading} style={{ marginTop: 2 }}>
@@ -822,7 +726,7 @@ export default function Home() {
               </div>
 
               <button style={{ padding: '10px 22px', borderRadius: 10, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.75)', fontSize: 13, cursor: 'pointer' }}
-                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(1); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); setAuthDone(false); setSelMusic(null); setFontColor('#FFFFFF'); setPlayingPreview(false); }}>
+                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(1); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); setAuthDone(false); setFontColor('#FFFFFF'); }}>
                 + Create another wish
               </button>
             </div>

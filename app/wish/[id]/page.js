@@ -2,14 +2,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams } from 'next/navigation';
 
-// Prebuilt royalty-free music tracks (mirrored from page.js)
-const MUSIC_TRACKS = [
-    { id: 'birthday', label: '🎂 Happy Birthday', src: 'https://cdn.pixabay.com/audio/2022/03/15/audio_3d0f6e52d7.mp3' },
-    { id: 'love', label: '🎵 Romantic Piano', src: 'https://cdn.pixabay.com/audio/2023/09/04/audio_b1c90e5484.mp3' },
-    { id: 'cheerful', label: '✨ Cheerful Bells', src: 'https://cdn.pixabay.com/audio/2022/10/30/audio_b99e0d6d5f.mp3' },
-    { id: 'calm', label: '🌿 Calm Acoustic', src: 'https://cdn.pixabay.com/audio/2022/10/25/audio_946d33eabb.mp3' },
-    { id: 'celebration', label: '🎆 Fanfare', src: 'https://cdn.pixabay.com/audio/2022/11/22/audio_febc508520.mp3' },
-];
 
 const BG_MAP = {
     'v1065-110': '/assets/v1065-110.jpg',
@@ -93,11 +85,6 @@ export default function WishPage() {
     const [overlayOpacity, setOverlayOpacity] = useState(0.55);
     const [openedMarked, setOpenedMarked] = useState(false);
     const [fontColor, setFontColor] = useState('#ffffff');
-    const [musicTrack, setMusicTrack] = useState(null); // track object or null
-    const [muted, setMuted] = useState(false);
-    const [musicPlaying, setMusicPlaying] = useState(false);
-    const audioRef = useRef(null);
-
     useEffect(() => {
         if (!id) return;
         fetch(`/api/wishes/${id}`)
@@ -117,10 +104,6 @@ export default function WishPage() {
                 if (data.font) setFont(data.font);
                 if (data.overlay_opacity != null) setOverlayOpacity(data.overlay_opacity);
                 if (data.font_color) setFontColor(data.font_color);
-                if (data.music) {
-                    const track = MUSIC_TRACKS.find(t => t.id === data.music);
-                    if (track) setMusicTrack(track);
-                }
                 const src = data.bg_image ? BG_MAP[data.bg_image] : ALL_BGS[Math.floor(Math.random() * ALL_BGS.length)];
                 setBgSrc(src);
                 if (!data.hasPasskey) {
@@ -141,16 +124,6 @@ export default function WishPage() {
         }
     }, [status, openedMarked, id]);
 
-    // Autoplay music when wish unlocks
-    useEffect(() => {
-        if (status !== 'unlocked' || !musicTrack || !audioRef.current) return;
-        audioRef.current.volume = 0.6;
-        audioRef.current.play().then(() => {
-            setMusicPlaying(true);
-        }).catch(() => {
-            // Browser blocked autoplay — user will see the music button to start manually
-        });
-    }, [status, musicTrack]);
 
     const unlock = async (e) => {
         e.preventDefault();
@@ -189,16 +162,6 @@ export default function WishPage() {
     const fontStyle = FONT_MAP[font] || FONT_MAP.playfair;
     const fontIsItalic = FONT_ITALIC.has(font);
 
-    const toggleMute = () => {
-        if (!audioRef.current) return;
-        if (musicPlaying) {
-            audioRef.current.muted = !muted;
-            setMuted(m => !m);
-        } else {
-            // First user gesture — start playback
-            audioRef.current.play().then(() => setMusicPlaying(true)).catch(() => { });
-        }
-    };
 
     // Reply CTA — links back to home with pre-fill params
     const replyUrl = wish
@@ -225,7 +188,6 @@ export default function WishPage() {
           100% {transform:translateY(108vh) rotate(380deg);opacity:0}
         }
         @keyframes spin { to { transform: rotate(360deg); } }
-        @keyframes musicPulse { 0%,100%{transform:scale(1);box-shadow:0 0 0 0 rgba(255,255,255,0.25)} 50%{transform:scale(1.08);box-shadow:0 0 0 8px rgba(255,255,255,0)} }
         .slide-up { animation: slideUp 0.5s cubic-bezier(.16,1,.3,1) both; }
         .fade-in  { animation: fadeIn 0.4s ease both; }
         .glass {
@@ -287,32 +249,6 @@ export default function WishPage() {
                 </>
             )}
 
-            {/* Hidden audio element */}
-            {musicTrack && (
-                <audio ref={audioRef} src={musicTrack.src} loop preload="auto" style={{ display: 'none' }} />
-            )}
-
-            {/* Floating mute button — only when music is set */}
-            {musicTrack && status === 'unlocked' && (
-                <button
-                    onClick={toggleMute}
-                    title={musicPlaying ? (muted ? 'Unmute music' : 'Mute music') : 'Play music'}
-                    style={{
-                        position: 'fixed', bottom: 20, right: 20, zIndex: 99,
-                        width: 44, height: 44, borderRadius: '50%',
-                        background: 'rgba(20,10,5,0.75)',
-                        backdropFilter: 'blur(12px)',
-                        border: '1px solid rgba(255,255,255,0.2)',
-                        color: '#fff', fontSize: 18, cursor: 'pointer',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        transition: 'all 0.2s',
-                        animation: !musicPlaying ? 'musicPulse 1.8s ease-in-out infinite' : 'none',
-                        boxShadow: '0 4px 16px rgba(0,0,0,0.4)',
-                    }}
-                >
-                    {!musicPlaying ? '🎵' : muted ? '🔇' : '🔊'}
-                </button>
-            )}
 
             {/* Floating petals */}
             {['🌸', '✦', '·', '♡', '✿'].map((c, i) => (

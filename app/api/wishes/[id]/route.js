@@ -47,7 +47,6 @@ export async function GET(request, context) {
             reply_to: row.reply_to || null,
             opened_at: row.opened_at || null,
             created_at: row.created_at,
-            music: row.music || null,
             font_color: row.font_color || null,
         });
     } catch (e) {
@@ -64,7 +63,7 @@ export async function POST(request, context) {
 
         const { data: row, error } = await supabase
             .from('wishes')
-            .select('message, passkey, bg_image, font, overlay_opacity, music, font_color')
+            .select('message, passkey, bg_image, font, overlay_opacity, font_color')
             .eq('id', id)
             .single();
 
@@ -79,7 +78,6 @@ export async function POST(request, context) {
             bg_image: row.bg_image || null,
             font: row.font || 'playfair',
             overlay_opacity: row.overlay_opacity ?? 0.55,
-            music: row.music || null,
             font_color: row.font_color || null,
         });
     } catch (e) {
