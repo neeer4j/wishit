@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 
 const CATEGORIES = [
   { value: 'birthday', label: 'Birthday', icon: '🎂' },
@@ -418,12 +419,16 @@ export default function Home() {
 
       {/* ── Rotating wallpaper (step 1 only) */}
       {BGS.map((bg, i) => loadedBgs.includes(i) ? (
-        <div key={bg.id} style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: `url(${bg.src})`, backgroundSize: 'cover', backgroundPosition: 'center', opacity: step === 1 ? (i === bgIdx ? 1 : 0) : 0, transition: 'opacity 2.5s ease', willChange: 'opacity' }} />
+        <div key={bg.id} style={{ position: 'fixed', inset: 0, zIndex: 0, opacity: step === 1 ? (i === bgIdx ? 1 : 0) : 0, transition: 'opacity 2.5s ease', willChange: 'opacity' }}>
+          <Image src={bg.src} alt="" fill priority={i < 2} style={{ objectFit: 'cover' }} quality={75} />
+        </div>
       ) : null)}
 
       {/* Step 2: selected bg as fixed full-screen */}
       {step === 2 && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 0, backgroundImage: `url(${bgSrc})`, backgroundSize: 'cover', backgroundPosition: 'center', transition: 'background-image 0.6s ease' }} />
+        <div style={{ position: 'fixed', inset: 0, zIndex: 0, opacity: 1, transition: 'opacity 0.6s ease' }}>
+          <Image src={bgSrc} alt="" fill priority style={{ objectFit: 'cover' }} quality={75} />
+        </div>
       )}
 
       {/* Dark overlay — adjustable in step 2 */}
@@ -504,7 +509,7 @@ export default function Home() {
                   {sortedBgs.map(bg => (
                     <button key={bg.id} className={`bg-thumb${selBg === bg.id ? ' sel' : ''}${bg.cats.includes(category) && selBg !== bg.id ? ' cat-match' : ''}`}
                       onClick={() => setSelBg(bg.id)} onMouseEnter={() => setHoverBg(bg.id)} onMouseLeave={() => setHoverBg(null)}>
-                      <img src={bg.src} alt="" loading="lazy" style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} />
+                      <Image src={bg.src} alt="" fill sizes="90px" style={{ objectFit: 'cover', display: 'block' }} quality={50} />
                       {selBg === bg.id && <div style={{ position: 'absolute', inset: 0, background: 'rgba(201,114,107,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14, fontWeight: 700 }}>✓</div>}
                     </button>
                   ))}
@@ -808,7 +813,7 @@ export default function Home() {
           <div style={{ marginTop: 20, textAlign: 'center' }}>
             <span className="credit-pill">
               <span className="credit-heart" style={{ fontSize: 13 }}>♡</span>
-              made with love by <strong style={{ fontWeight: 600, letterSpacing: '.3px' }}>neeer4j</strong>
+              made with love by <strong style={{ fontWeight: 600, letterSpacing: '.3px' }}>neeraj venu</strong>
             </span>
           </div>
         )}

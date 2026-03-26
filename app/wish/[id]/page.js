@@ -1,5 +1,6 @@
 'use client';
 import { useState, useEffect, useRef } from 'react';
+import Image from 'next/image';
 import { useParams } from 'next/navigation';
 
 
@@ -243,8 +244,9 @@ export default function WishPage() {
             {/* Background image */}
             {bgSrc && (
                 <>
-                    <img src={bgSrc} alt="" onLoad={() => setBgReady(true)}
-                        style={{ position: 'fixed', inset: 0, width: '100%', height: '100%', objectFit: 'cover', zIndex: 0, opacity: bgReady ? 1 : 0, transition: 'opacity 1.8s ease', pointerEvents: 'none' }} />
+                    <div style={{ position: 'fixed', inset: 0, zIndex: 0, opacity: bgReady ? 1 : 0, transition: 'opacity 1.8s ease', pointerEvents: 'none' }}>
+                        <Image src={bgSrc} alt="" fill priority onLoad={() => setBgReady(true)} style={{ objectFit: 'cover' }} quality={85} />
+                    </div>
                     <div style={{ position: 'fixed', inset: 0, zIndex: 1, background: `linear-gradient(160deg,rgba(10,4,2,${overlayOpacity * 0.9}),rgba(10,4,2,${overlayOpacity}))`, opacity: bgReady ? 1 : 0, transition: 'opacity 1.5s ease' }} />
                 </>
             )}
@@ -323,7 +325,7 @@ export default function WishPage() {
                         <div style={{ position: 'relative', height: 150, overflow: 'hidden' }}>
                             {bgSrc && (
                                 <>
-                                    <img src={bgSrc} alt="" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'cover', opacity: bgReady ? 1 : 0, transition: 'opacity 1.5s ease' }} />
+                                    <Image src={bgSrc} alt="" fill sizes="440px" style={{ objectFit: 'cover', opacity: bgReady ? 1 : 0, transition: 'opacity 1.5s ease' }} quality={60} />
                                     <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,rgba(0,0,0,0.08),rgba(0,0,0,0.65))' }} />
                                 </>
                             )}
