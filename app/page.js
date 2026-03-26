@@ -813,7 +813,7 @@ export default function Home() {
           <div style={{ marginTop: 20, textAlign: 'center' }}>
             <span className="credit-pill">
               <span className="credit-heart" style={{ fontSize: 13 }}>♡</span>
-              made with love by <strong style={{ fontWeight: 600, letterSpacing: '.3px' }}>neeraj venu</strong>
+              made with love by <strong style={{ fontWeight: 600, letterSpacing: '.3px' }}>french pizza</strong>
             </span>
           </div>
         )}
