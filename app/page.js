@@ -150,6 +150,8 @@ export default function Home() {
   const [selMusic, setSelMusic] = useState(null);
   const [fontColor, setFontColor] = useState('#FFFFFF'); // default white
   const qrCanvasRef = useRef(null);
+  const [playingPreview, setPlayingPreview] = useState(false);
+  const previewAudioRef = useRef(null);
 
   // Auth state
   const [session, setSession] = useState(null); // { userId, username }
@@ -162,6 +164,24 @@ export default function Home() {
   const [myWishesLoading, setMyWishesLoading] = useState(false);
 
   useEffect(() => { setMounted(true); }, []);
+
+  // Stop playing if they change the track
+  useEffect(() => {
+    if (previewAudioRef.current) {
+      previewAudioRef.current.pause();
+      setPlayingPreview(false);
+    }
+  }, [selMusic]);
+
+  const togglePreview = () => {
+    if (!previewAudioRef.current) return;
+    if (playingPreview) {
+      previewAudioRef.current.pause();
+      setPlayingPreview(false);
+    } else {
+      previewAudioRef.current.play().then(() => setPlayingPreview(true)).catch(() => {});
+    }
+  };
 
   // Restore session from localStorage
   useEffect(() => {
@@ -694,7 +714,15 @@ export default function Home() {
                         );
                       })}
                     </div>
-                    {selMusic && <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', marginTop: 4 }}>✓ Music plays when wish opens</p>}
+                    {selMusic && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 8 }}>
+                        <p style={{ fontSize: 10, color: 'rgba(255,255,255,0.35)', margin: 0 }}>✓ Music plays when wish opens</p>
+                        <button type="button" onClick={togglePreview} style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 12, padding: '4px 10px', color: '#fff', fontSize: 11, fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 5, transition: 'all 0.2s' }}>
+                          {playingPreview ? '⏸ Pause' : '▶ Preview'}
+                        </button>
+                        <audio ref={previewAudioRef} src={MUSIC_TRACKS.find(t => t.id === selMusic)?.src} onEnded={() => setPlayingPreview(false)} style={{ display: 'none' }} />
+                      </div>
+                    )}
                   </div>
 
                   {/* Submit */}
@@ -794,7 +822,7 @@ export default function Home() {
               </div>
 
               <button style={{ padding: '10px 22px', borderRadius: 10, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.75)', fontSize: 13, cursor: 'pointer' }}
-                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(1); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); setAuthDone(false); setSelMusic(null); setFontColor('#FFFFFF'); }}>
+                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(1); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); setAuthDone(false); setSelMusic(null); setFontColor('#FFFFFF'); setPlayingPreview(false); }}>
                 + Create another wish
               </button>
             </div>
