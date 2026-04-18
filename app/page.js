@@ -94,8 +94,16 @@ const EXPIRY_OPTIONS = [
 
 const PETALS = Array.from({ length: 12 }, (_, i) => ({
   id: i, left: `${(i * 8.3) % 94}%`, delay: `${i * 0.9}s`, dur: `${10 + (i % 4) * 2.5}s`,
-  size: 11 + (i % 4) * 4, char: ['🌸', '✦', '·', '♡', '✿'][i % 5],
+  size: 11 + (i % 4) * 4,
 }));
+
+const PARTICLES = [
+  { id: 'petals', label: 'Petals', chars: ['🌸', '✦', '·', '♡', '✿'] },
+  { id: 'snow', label: 'Snow', chars: ['❄️', '❅', '❆', '·', 'º'] },
+  { id: 'hearts', label: 'Hearts', chars: ['❤️', '💕', '💗', '💖', '💘'] },
+  { id: 'confetti', label: 'Confetti', chars: ['🎊', '🎉', '✨', '🎈', '🎇'] },
+  { id: 'bubbles', label: 'Bubbles', chars: ['🫧', '○', '◌', '°', '·'] },
+];
 
 
 export default function Home() {
@@ -116,6 +124,7 @@ export default function Home() {
   const [scheduledAt, setScheduledAt] = useState('');
   const [showQr, setShowQr] = useState(false);
   const [fontColor, setFontColor] = useState('#FFFFFF'); // default white
+  const [particleType, setParticleType] = useState('petals');
   const qrCanvasRef = useRef(null);
 
   // Auth state
@@ -218,6 +227,7 @@ export default function Home() {
           expires_at, scheduled_at,
           user_id: session?.userId || null,
           font_color: fontColor || null,
+          particle_type: particleType,
         }),
       });
       const data = await res.json();
@@ -307,6 +317,8 @@ export default function Home() {
   const wallBg = BGS[bgIdx].src;
   const fontStyle = FONTS.find(f => f.id === font)?.style || FONTS[0].style;
   const fontItalic = FONTS.find(f => f.id === font)?.italic ?? true;
+
+  const activeParticles = PARTICLES.find(p => p.id === particleType)?.chars || PARTICLES[0].chars;
 
   // Filtered and sorted backgrounds for the picker (category matches first)
   const sortedBgs = category
@@ -439,9 +451,9 @@ export default function Home() {
         transition: 'background 0.3s'
       }} />
 
-      {/* Petals */}
+      {/* Petals / Particles */}
       {mounted && PETALS.map(p => (
-        <div key={p.id} style={{ position: 'fixed', left: p.left, top: '-28px', fontSize: p.size, zIndex: 1, pointerEvents: 'none', opacity: .35, animation: `floatDown ${p.dur} ${p.delay} linear infinite`, willChange: 'transform' }}>{p.char}</div>
+        <div key={p.id} style={{ position: 'fixed', left: p.left, top: '-28px', fontSize: p.size, zIndex: 1, pointerEvents: 'none', opacity: .35, animation: `floatDown ${p.dur} ${p.delay} linear infinite`, willChange: 'transform' }}>{activeParticles[p.id % 5]}</div>
       ))}
 
       {/* ── Content */}
@@ -608,7 +620,7 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Passkey + Expiry */}
+                  {/* Passkey + Expiry + Particles */}
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
                     <div>
                       <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 4 }}>Passkey (optional)</label>
@@ -623,14 +635,23 @@ export default function Home() {
                     </div>
                   </div>
 
-                  {/* Schedule */}
-                  <div>
-                    <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 4 }}>Schedule unlock (optional)</label>
-                    <input type="datetime-local" className="option-inp"
-                      value={scheduledAt}
-                      min={new Date().toISOString().slice(0, 16)}
-                      onChange={e => setScheduledAt(e.target.value)}
-                      style={{ padding: '7px 10px', fontSize: 12, colorScheme: 'dark' }} />
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                    {/* Schedule */}
+                    <div>
+                      <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 4 }}>Schedule unlock (optional)</label>
+                      <input type="datetime-local" className="option-inp"
+                        value={scheduledAt}
+                        min={new Date().toISOString().slice(0, 16)}
+                        onChange={e => setScheduledAt(e.target.value)}
+                        style={{ padding: '7px 10px', fontSize: 12, colorScheme: 'dark' }} />
+                    </div>
+                    {/* Particles */}
+                    <div>
+                      <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 4 }}>Animation</label>
+                      <select className="option-inp" style={{ padding: '7px 10px', fontSize: 12 }} value={particleType} onChange={e => setParticleType(e.target.value)}>
+                        {PARTICLES.map(p => <option key={p.id} value={p.id}>{p.icon || p.chars[0]} {p.label}</option>)}
+                      </select>
+                    </div>
                   </div>
 
 

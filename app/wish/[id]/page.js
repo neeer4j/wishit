@@ -52,6 +52,14 @@ const CAT_META = {
     baby_shower: { icon: '🍼', accent: '#EC4899' },
 };
 
+const PARTICLES = {
+  petals: ['🌸', '✦', '·', '♡', '✿'],
+  snow: ['❄️', '❅', '❆', '·', 'º'],
+  hearts: ['❤️', '💕', '💗', '💖', '💘'],
+  confetti: ['🎊', '🎉', '✨', '🎈', '🎇'],
+  bubbles: ['🫧', '○', '◌', '°', '·']
+};
+
 // Countdown helper
 function Countdown({ target }) {
     const [timeLeft, setTimeLeft] = useState('');
@@ -86,6 +94,8 @@ export default function WishPage() {
     const [overlayOpacity, setOverlayOpacity] = useState(0.55);
     const [openedMarked, setOpenedMarked] = useState(false);
     const [fontColor, setFontColor] = useState('#ffffff');
+    const [envelopeOpen, setEnvelopeOpen] = useState(false);
+    const [envelopeAnimating, setEnvelopeAnimating] = useState(false);
     useEffect(() => {
         if (!id) return;
         fetch(`/api/wishes/${id}`)
@@ -162,6 +172,7 @@ export default function WishPage() {
     const meta = CAT_META[wish?.category] || { icon: '✉️', accent: '#9B6E7A' };
     const fontStyle = FONT_MAP[font] || FONT_MAP.playfair;
     const fontIsItalic = FONT_ITALIC.has(font);
+    const activeParticles = PARTICLES[wish?.particle_type] || PARTICLES.petals;
 
 
     // Reply CTA — links back to home with pre-fill params
@@ -239,6 +250,22 @@ export default function WishPage() {
         .action-btn.reply:hover { border-color:rgba(201,114,107,0.7); background:rgba(201,114,107,0.1); color:#fff; }
         .action-btn.wa { border-color:rgba(37,211,102,0.25); color:rgba(150,255,180,0.7); }
         .action-btn.wa:hover { border-color:rgba(37,211,102,0.5); background:rgba(37,211,102,0.1); color:rgba(180,255,200,0.95); }
+
+        .env-wrap { position:relative; width: 320px; height: 210px; margin: 0 auto; cursor: pointer; transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); perspective: 800px; }
+        .env-wrap:hover { transform: scale(1.03) translateY(-5px); }
+        .env-body { position: absolute; inset:0; background: #FFF3E6; border-radius: 4px; box-shadow: 0 20px 40px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.05); overflow:hidden; }
+        .env-flap { position: absolute; top: 0; left: 0; width: 0; height: 0; border-top: 110px solid #FDF8F0; border-right: 160px solid transparent; border-left: 160px solid transparent; transform-origin: top; z-index: 4; transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.1)); }
+        .env-b { position: absolute; bottom: 0; left: 0; width: 0; height: 0; border-bottom: 110px solid #F3E5D4; border-right: 160px solid transparent; border-left: 160px solid transparent; z-index: 2; }
+        .env-l { position: absolute; top:0; left:0; width: 0; height: 0; border-top: 105px solid transparent; border-bottom: 105px solid transparent; border-left: 160px solid #FAEDE1; z-index: 3;}
+        .env-r { position: absolute; top:0; right:0; width: 0; height: 0; border-top: 105px solid transparent; border-bottom: 105px solid transparent; border-right: 160px solid #FAEDE1; z-index: 3;}
+
+        .seal { position: absolute; top: 110px; left: 160px; transform: translate(-50%, -50%); width: 52px; height: 52px; background: #9B2D20; border-radius: 50%; z-index: 5; box-shadow: 0 4px 8px rgba(0,0,0,0.3), inset 0 2px 4px rgba(255,255,255,0.3), inset 0 -2px 6px rgba(0,0,0,0.2); border: 2px solid #802318; display: flex; align-items: center; justify-content: center; transition: all 0.4s; }
+        .seal::before { content: 'W'; color: #ECC596; font-family: var(--font-playfair), serif; font-size: 26px; font-style: italic; text-shadow: 0 1px 2px rgba(0,0,0,0.4); }
+
+        .env-wrap.animating .env-flap { transform: rotateX(180deg); z-index: 1; filter: none; }
+        .env-wrap.animating .seal { opacity: 0; transform: translate(-50%, -50%) scale(1.5); }
+        .env-wrap.animating { animation: envSlideOut 0.8s 0.2s forwards cubic-bezier(0.16, 1, 0.3, 1); }
+        @keyframes envSlideOut { 0% { transform: translateY(0); opacity:1 } 100% { transform: translateY(150px); opacity:0 } }
       `}</style>
 
             {/* Background image */}
@@ -252,8 +279,8 @@ export default function WishPage() {
             )}
 
 
-            {/* Floating petals */}
-            {['🌸', '✦', '·', '♡', '✿'].map((c, i) => (
+            {/* Floating particles */}
+            {activeParticles.map((c, i) => (
                 <div key={i} style={{ position: 'fixed', left: `${12 + i * 18}%`, top: '-24px', fontSize: 13 + i * 2, zIndex: 1, pointerEvents: 'none', opacity: 0.3, animation: `floatDown ${10 + i * 3}s ${i * 1.5}s linear infinite`, willChange: 'transform' }}>{c}</div>
             ))}
 
@@ -317,8 +344,26 @@ export default function WishPage() {
                     </div>
                 )}
 
+                {/* Envelope View */}
+                {(status === 'locked' || status === 'unlocked') && !envelopeOpen && (
+                    <div className={`env-wrap fade-in ${envelopeAnimating ? 'animating' : ''}`} onClick={() => {
+                        if (envelopeAnimating) return;
+                        setEnvelopeAnimating(true);
+                        setTimeout(() => setEnvelopeOpen(true), 900);
+                    }}>
+                        <div className="env-body">
+                           <div className="env-flap" />
+                           <div className="env-l" />
+                           <div className="env-r" />
+                           <div className="env-b" />
+                        </div>
+                        <div className="seal" />
+                        <p style={{ position: 'absolute', bottom: -50, width: '100%', textAlign: 'center', color: 'rgba(255,255,255,0.7)', fontSize: 13, letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 600, animation: 'pulse 2s infinite' }}>Tap to open</p>
+                    </div>
+                )}
+
                 {/* Wish card */}
-                {(status === 'locked' || status === 'unlocked') && (
+                {(status === 'locked' || status === 'unlocked') && envelopeOpen && (
                     <div className="glass slide-up" style={{ width: '100%', maxWidth: 440 }}>
 
                         {/* Card header */}

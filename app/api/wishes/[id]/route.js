@@ -48,6 +48,7 @@ export async function GET(request, context) {
             opened_at: row.opened_at || null,
             created_at: row.created_at,
             font_color: row.font_color || null,
+            particle_type: row.particle_type || 'petals',
         });
     } catch (e) {
         console.error('GET wish error:', e);
@@ -63,7 +64,7 @@ export async function POST(request, context) {
 
         const { data: row, error } = await supabase
             .from('wishes')
-            .select('message, passkey, bg_image, font, overlay_opacity, font_color')
+            .select('message, passkey, bg_image, font, overlay_opacity, font_color, particle_type')
             .eq('id', id)
             .single();
 
@@ -79,6 +80,7 @@ export async function POST(request, context) {
             font: row.font || 'playfair',
             overlay_opacity: row.overlay_opacity ?? 0.55,
             font_color: row.font_color || null,
+            particle_type: row.particle_type || 'petals',
         });
     } catch (e) {
         console.error('POST wish error:', e);

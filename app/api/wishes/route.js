@@ -8,7 +8,7 @@ export async function POST(request) {
     try {
         const {
             category, sender, receiver, message, passkey, bg_image,
-            font, overlay_opacity, expires_at, scheduled_at, user_id, font_color,
+            font, overlay_opacity, expires_at, scheduled_at, user_id, font_color, particle_type,
         } = await request.json();
 
         if (!category || !message?.trim()) {
@@ -32,6 +32,7 @@ export async function POST(request) {
             scheduled_at: scheduled_at || null,
             user_id: user_id || null,
             font_color: font_color || null,
+            particle_type: particle_type || 'petals',
         });
 
         if (error) throw error;

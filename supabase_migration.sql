@@ -40,3 +40,6 @@ ALTER TABLE wishes ADD COLUMN IF NOT EXISTS music TEXT DEFAULT NULL;
 
 -- Font colour (CSS color value) chosen by sender
 ALTER TABLE wishes ADD COLUMN IF NOT EXISTS font_color TEXT DEFAULT NULL;
+
+-- Dynamic particle type chosen by sender
+ALTER TABLE wishes ADD COLUMN IF NOT EXISTS particle_type TEXT DEFAULT 'petals';
