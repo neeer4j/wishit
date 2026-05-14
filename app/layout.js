@@ -11,7 +11,7 @@ const cinzel = Cinzel({ subsets: ["latin"], weight: ["400", "600"], variable: '-
 const lora = Lora({ subsets: ["latin"], weight: ["400", "600"], style: ["normal", "italic"], variable: '--font-lora' });
 
 export const metadata = {
-  title: "WishIt — Send Heartfelt Wishes",
+  title: "Wish Them — Send Heartfelt Wishes",
   description: "Create beautifully personalised wishes for the people you love",
 };
 

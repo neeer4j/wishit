@@ -287,7 +287,7 @@ export default function WishPage() {
             <div style={{ position: 'relative', zIndex: 2, height: '100dvh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '0 16px' }}>
 
                 {/* Brand */}
-                <p style={{ fontSize: 10, letterSpacing: '4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 16 }}>✦ wishit ✦</p>
+                <p style={{ fontSize: 10, letterSpacing: '4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', marginBottom: 16 }}>✦ wish them ✦</p>
 
                 {/* Loading */}
                 {status === 'loading' && (
@@ -419,7 +419,7 @@ export default function WishPage() {
                                             {message}
                                         </p>
                                     </div>
-                                    <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 14, letterSpacing: '1px', textTransform: 'uppercase' }}>Sent with love via WishIt ♡</p>
+                                    <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 14, letterSpacing: '1px', textTransform: 'uppercase' }}>Sent with love via Wish Them ♡</p>
 
                                     <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '14px 0' }} />
 
@@ -452,7 +452,7 @@ export default function WishPage() {
                     </div>
                 )}
 
-                <p style={{ marginTop: 14, fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)' }}>Made with ♡ — WishIt</p>
+                <p style={{ marginTop: 14, fontSize: 10, letterSpacing: '2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.2)' }}>Made with ♡ — Wish Them</p>
             </div>
         </>
     );

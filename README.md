@@ -1,8 +1,8 @@
-# 💌 WishIt
+# 💌 Wish Them
 
 **Send heartfelt wishes that feel like a dream.**
 
-WishIt is a premium postcard creation platform that allows you to send beautiful, personalized wishes for every occasion. With curated backgrounds, elegant typography, and a "frosted-glass" aesthetic, it's designed to make every message feel special.
+Wish Them is a premium postcard creation platform that allows you to send beautiful, personalized wishes for every occasion. With curated backgrounds, elegant typography, and a "frosted-glass" aesthetic, it's designed to make every message feel special.
 
 ## ✨ Features
 

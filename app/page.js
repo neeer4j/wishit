@@ -141,7 +141,7 @@ export default function Home() {
 
   // Restore session from localStorage
   useEffect(() => {
-    try { const s = localStorage.getItem('wishit_session'); if (s) setSession(JSON.parse(s)); } catch { }
+    try { const s = localStorage.getItem('wishthem_session'); if (s) setSession(JSON.parse(s)); } catch { }
   }, []);
 
   useEffect(() => {
@@ -263,12 +263,12 @@ export default function Home() {
 
   const saveSession = (s) => {
     setSession(s);
-    localStorage.setItem('wishit_session', JSON.stringify(s));
+    localStorage.setItem('wishthem_session', JSON.stringify(s));
   };
 
   const logout = () => {
     setSession(null);
-    localStorage.removeItem('wishit_session');
+    localStorage.removeItem('wishthem_session');
     setAuthDone(false);
     setAuthForm({ username: '', password: '' });
     setAuthError('');
@@ -470,7 +470,7 @@ export default function Home() {
             </button>
           )}
 
-          <p style={{ fontSize: 10, letterSpacing: '4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 7 }}>✦ wishit ✦</p>
+          <p style={{ fontSize: 10, letterSpacing: '4px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', marginBottom: 7 }}>✦ wish them ✦</p>
           {step !== 2 && step !== 'mine' && (
             <h1 style={{ fontFamily: 'Playfair Display,serif', fontSize: 'clamp(26px,5vw,36px)', fontWeight: 700, lineHeight: 1.15, textShadow: '0 2px 20px rgba(0,0,0,.4)' }}>
               {step === 1 && <><span>Send a wish</span><br /><em style={{ fontWeight: 400 }}>from the heart</em></>}
