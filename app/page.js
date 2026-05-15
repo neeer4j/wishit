@@ -90,6 +90,7 @@ const EXPIRY_OPTIONS = [
   { label: '12 days', value: 12 },
   { label: '13 days', value: 13 },
   { label: '2 weeks', value: 14 },
+  { label: '30 days', value: 30 },
 ];
 
 const PETALS = Array.from({ length: 12 }, (_, i) => ({
@@ -120,7 +121,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [font, setFont] = useState('playfair');
   const [overlayOpacity, setOverlayOpacity] = useState(0.55);
-  const [expiryDays, setExpiryDays] = useState(1);
+  const [expiryDays, setExpiryDays] = useState(30);
   const [scheduledAt, setScheduledAt] = useState('');
   const [showQr, setShowQr] = useState(false);
   const [fontColor, setFontColor] = useState('#FFFFFF'); // default white
@@ -752,7 +753,7 @@ export default function Home() {
               </div>
 
               <button style={{ padding: '10px 22px', borderRadius: 10, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.75)', fontSize: 13, cursor: 'pointer' }}
-                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(1); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); setAuthDone(false); setFontColor('#FFFFFF'); }}>
+                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(30); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); setAuthDone(false); setFontColor('#FFFFFF'); }}>
                 + Create another wish
               </button>
             </div>
