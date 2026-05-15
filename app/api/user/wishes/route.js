@@ -16,7 +16,7 @@ export async function GET(request) {
 
         const { data, error } = await supabase
             .from('wishes')
-            .select('id, category, sender, receiver, created_at, expires_at, opened_at, scheduled_at')
+            .select('id, category, sender, receiver, message, created_at, expires_at, opened_at, scheduled_at')
             .eq('user_id', userId)
             .order('created_at', { ascending: false });
 

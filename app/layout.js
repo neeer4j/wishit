@@ -13,6 +13,9 @@ const lora = Lora({ subsets: ["latin"], weight: ["400", "600"], style: ["normal"
 export const metadata = {
   title: "Wish Them — Send Heartfelt Wishes",
   description: "Create beautifully personalised wishes for the people you love",
+  icons: {
+    icon: '/assets/icon.png',
+  },
 };
 
 export const viewport = {

@@ -76,6 +76,7 @@ const FONT_COLORS = [
 ];
 
 const EXPIRY_OPTIONS = [
+  { label: 'Never expires', value: 0 },
   { label: '1 day', value: 1 },
   { label: '2 days', value: 2 },
   { label: '3 days', value: 3 },
@@ -121,7 +122,7 @@ export default function Home() {
   const [mounted, setMounted] = useState(false);
   const [font, setFont] = useState('playfair');
   const [overlayOpacity, setOverlayOpacity] = useState(0.55);
-  const [expiryDays, setExpiryDays] = useState(30);
+  const [expiryDays, setExpiryDays] = useState(0);
   const [scheduledAt, setScheduledAt] = useState('');
   const [showQr, setShowQr] = useState(false);
   const [fontColor, setFontColor] = useState('#FFFFFF'); // default white
@@ -677,7 +678,7 @@ export default function Home() {
               <p style={{ color: 'rgba(255,255,255,0.55)', fontSize: 13, marginBottom: 18, lineHeight: 1.6 }}>
                 Share this link with your special someone
                 {scheduledAt && <><br /><span style={{ color: 'rgba(255,200,130,0.8)', fontSize: 12 }}>⏰ Unlocks {new Date(scheduledAt).toLocaleString()}</span></>}
-                {expiryDays && <><br /><span style={{ color: 'rgba(255,180,130,0.7)', fontSize: 12 }}>⌛ Expires in {expiryDays} day{expiryDays > 1 ? 's' : ''}</span></>}
+                {expiryDays > 0 && <><br /><span style={{ color: 'rgba(255,180,130,0.7)', fontSize: 12 }}>⌛ Expires in {expiryDays} day{expiryDays > 1 ? 's' : ''}</span></>}
               </p>
 
               {/* Link copy row */}
@@ -753,7 +754,7 @@ export default function Home() {
               </div>
 
               <button style={{ padding: '10px 22px', borderRadius: 10, background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.18)', color: 'rgba(255,255,255,0.75)', fontSize: 13, cursor: 'pointer' }}
-                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(30); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); setAuthDone(false); setFontColor('#FFFFFF'); }}>
+                onClick={() => { setStep(1); setCat(''); setForm({ sender: '', receiver: '', message: '', passkey: '' }); setWishId(null); setExpiryDays(0); setScheduledAt(''); setShowQr(false); setFont('playfair'); setOverlayOpacity(0.55); setAuthDone(false); setFontColor('#FFFFFF'); }}>
                 + Create another wish
               </button>
             </div>
@@ -799,6 +800,8 @@ export default function Home() {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {myWishes.map(w => {
                     const isExpired = w.expires_at && new Date(w.expires_at) < new Date();
+                    const isScheduled = w.scheduled_at && new Date(w.scheduled_at) > new Date();
+                    const isOpened = !!w.opened_at;
                     const icon = CATEGORIES.find(c => c.value === w.category)?.icon || '💌';
                     return (
                       <div key={w.id} style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: 12, padding: 14, display: 'flex', gap: 14, alignItems: 'center' }}>
@@ -806,18 +809,35 @@ export default function Home() {
                           {icon}
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <p style={{ fontWeight: 600, fontSize: 15, marginBottom: 2, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>To: {w.receiver || 'Someone special'}</p>
-                          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{new Date(w.created_at).toLocaleDateString()}</p>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                              <p style={{ fontWeight: 600, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>To: {w.receiver || 'Someone special'}</p>
+                              {isExpired ? (
+                                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,100,100,0.15)', color: 'rgba(255,150,150,0.9)' }}>EXPIRED</span>
+                              ) : isScheduled ? (
+                                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(100,150,255,0.15)', color: 'rgba(150,200,255,0.9)' }}>SCHEDULED</span>
+                              ) : isOpened ? (
+                                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(100,255,150,0.15)', color: 'rgba(150,255,180,0.9)' }}>OPENED</span>
+                              ) : (
+                                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,200,100,0.15)', color: 'rgba(255,220,150,0.9)' }}>UNREAD</span>
+                              )}
+                          </div>
+                          {w.message && (
+                              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 6 }}>
+                                  "{w.message}"
+                              </p>
+                          )}
+                          <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{new Date(w.created_at).toLocaleDateString()}</p>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
-                          {isExpired ? (
-                            <span style={{ fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 6, background: 'rgba(255,100,100,0.15)', color: 'rgba(255,150,150,0.9)', border: '1px solid rgba(255,100,100,0.2)' }}>EXPIRED</span>
-                          ) : (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                          <a href={`/wish/${w.id}`} style={{ textDecoration: 'none', textAlign: 'center', background: 'rgba(255,255,255,0.9)', border: 'none', borderRadius: 6, padding: '6px 12px', color: '#1a0e08', fontSize: 12, fontWeight: 700, cursor: 'pointer' }}>
+                            View
+                          </a>
+                          {!isExpired && (
                             <button onClick={() => {
                               const url = `${window.location.origin}/wish/${w.id}`;
                               navigator.clipboard.writeText(url);
                               alert('Link copied!');
-                            }} style={{ background: 'rgba(255,255,255,0.15)', border: 'none', borderRadius: 6, padding: '6px 12px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
+                            }} style={{ background: 'rgba(255,255,255,0.1)', border: 'none', borderRadius: 6, padding: '6px 12px', color: '#fff', fontSize: 12, fontWeight: 600, cursor: 'pointer' }}>
                               Copy Link
                             </button>
                           )}
