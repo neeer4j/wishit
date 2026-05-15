@@ -176,17 +176,52 @@ export default function WishPage() {
         if (!cardRef.current) return;
         setDownloading(true);
         try {
-            // Temporarily set a solid background since html2canvas doesn't support backdrop-filter
+            // Store original styles
             const originalBg = cardRef.current.style.background;
-            cardRef.current.style.background = '#1a0e08';
+            const originalBorder = cardRef.current.style.border;
+            const originalBorderRadius = cardRef.current.style.borderRadius;
+            const originalBoxShadow = cardRef.current.style.boxShadow;
             
+            // To make it prettier: remove max-height from message-box and set a rich background
+            const msgBox = cardRef.current.querySelector('.message-box');
+            let originalMaxHeight = '';
+            let originalOverflow = '';
+            if (msgBox) {
+                originalMaxHeight = msgBox.style.maxHeight;
+                originalOverflow = msgBox.style.overflowY;
+                msgBox.style.maxHeight = 'none';
+                msgBox.style.overflowY = 'visible';
+            }
+
+            // Apply a beautiful seamless background for the exported image
+            if (bgSrc) {
+                // Ensure the background is fully loaded for html2canvas
+                cardRef.current.style.background = `linear-gradient(rgba(15,8,4,${overlayOpacity + 0.15}), rgba(15,8,4,${overlayOpacity + 0.2})), url(${bgSrc}) center/cover`;
+            } else {
+                cardRef.current.style.background = '#1a0e08';
+            }
+            cardRef.current.style.border = 'none';
+            cardRef.current.style.borderRadius = '24px';
+            cardRef.current.style.boxShadow = 'none';
+            
+            // Wait a tick for styles to apply
+            await new Promise(r => setTimeout(r, 50));
+
             const canvas = await html2canvas(cardRef.current, {
-                scale: 2,
+                scale: 3, // Higher quality
                 useCORS: true,
                 backgroundColor: null,
             });
             
+            // Revert styles
             cardRef.current.style.background = originalBg;
+            cardRef.current.style.border = originalBorder;
+            cardRef.current.style.borderRadius = originalBorderRadius;
+            cardRef.current.style.boxShadow = originalBoxShadow;
+            if (msgBox) {
+                msgBox.style.maxHeight = originalMaxHeight;
+                msgBox.style.overflowY = originalOverflow;
+            }
             
             const dataUrl = canvas.toDataURL('image/png');
             const link = document.createElement('a');
@@ -401,8 +436,8 @@ export default function WishPage() {
                         <div style={{ position: 'relative', height: 150, overflow: 'hidden' }}>
                             {bgSrc && (
                                 <>
-                                    <Image src={bgSrc} alt="" fill sizes="440px" style={{ objectFit: 'cover', opacity: bgReady ? 1 : 0, transition: 'opacity 1.5s ease' }} quality={60} />
-                                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,rgba(0,0,0,0.08),rgba(0,0,0,0.65))' }} />
+                                    <Image src={bgSrc} alt="" fill sizes="440px" style={{ objectFit: 'cover', opacity: bgReady ? 1 : 0, transition: 'opacity 1.5s ease' }} quality={60} data-html2canvas-ignore="true" />
+                                    <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to bottom,rgba(0,0,0,0.08),rgba(0,0,0,0.65))' }} data-html2canvas-ignore="true" />
                                 </>
                             )}
                             <div style={{ position: 'relative', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', padding: '14px 20px' }}>
@@ -450,43 +485,35 @@ export default function WishPage() {
                                             {message}
                                         </p>
                                     </div>
-                                    <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 14, letterSpacing: '1px', textTransform: 'uppercase' }}>Sent with love via Wish Them ♡</p>
+                                    <p style={{ textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: 11, marginTop: 14, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>Sent with love via Wish Them ♡</p>
 
-                                    <div style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '14px 0' }} />
+                                    <div data-html2canvas-ignore="true" style={{ height: 1, background: 'rgba(255,255,255,0.08)', margin: '14px 0' }} />
 
                                     {/* Action buttons */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                                    <div data-html2canvas-ignore="true" style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                         {/* Reply */}
-                                        {!downloading && (
-                                            <a href={replyUrl} className="action-btn reply">
-                                                💌 Send a reply
-                                            </a>
-                                        )}
+                                        <a href={replyUrl} className="action-btn reply">
+                                            💌 Send a reply
+                                        </a>
 
                                         {/* Share row */}
-                                        {!downloading && (
-                                            <>
-                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                                                    <button className="action-btn" onClick={shareWish}>
-                                                        ⬆ Share this wish
-                                                    </button>
-                                                    <a className="action-btn wa" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" /><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.975-1.305A9.944 9.944 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" /></svg>
-                                                        WhatsApp
-                                                    </a>
-                                                </div>
-                                                <button className="action-btn" onClick={downloadImage} style={{ borderColor: 'rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.85)' }}>
-                                                    ⬇ Save as Image
-                                                </button>
-                                            </>
-                                        )}
+                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                            <button className="action-btn" onClick={shareWish}>
+                                                ⬆ Share this wish
+                                            </button>
+                                            <a className="action-btn wa" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" /><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.975-1.305A9.944 9.944 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" /></svg>
+                                                WhatsApp
+                                            </a>
+                                        </div>
+                                        <button className="action-btn" onClick={downloadImage} style={{ borderColor: 'rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.85)' }}>
+                                            ⬇ Save as Image
+                                        </button>
 
                                         {/* Create own */}
-                                        {!downloading && (
-                                            <a href="/" className="action-btn" style={{ textAlign: 'center' }}>
-                                                Send your own wish →
-                                            </a>
-                                        )}
+                                        <a href="/" className="action-btn" style={{ textAlign: 'center' }}>
+                                            Send your own wish →
+                                        </a>
                                     </div>
                                 </div>
                             )}
