@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { useParams } from 'next/navigation';
-
+import html2canvas from 'html2canvas';
 
 const BG_MAP = {
     'v1065-110': '/assets/v1065-110.jpg',
@@ -96,6 +96,9 @@ export default function WishPage() {
     const [fontColor, setFontColor] = useState('#ffffff');
     const [envelopeOpen, setEnvelopeOpen] = useState(false);
     const [envelopeAnimating, setEnvelopeAnimating] = useState(false);
+    const cardRef = useRef(null);
+    const [downloading, setDownloading] = useState(false);
+
     useEffect(() => {
         if (!id) return;
         fetch(`/api/wishes/${id}`)
@@ -166,6 +169,34 @@ export default function WishPage() {
             catch { /* cancelled */ }
         } else {
             await navigator.clipboard.writeText(url).catch(() => { });
+        }
+    };
+
+    const downloadImage = async () => {
+        if (!cardRef.current) return;
+        setDownloading(true);
+        try {
+            // Temporarily set a solid background since html2canvas doesn't support backdrop-filter
+            const originalBg = cardRef.current.style.background;
+            cardRef.current.style.background = '#1a0e08';
+            
+            const canvas = await html2canvas(cardRef.current, {
+                scale: 2,
+                useCORS: true,
+                backgroundColor: null,
+            });
+            
+            cardRef.current.style.background = originalBg;
+            
+            const dataUrl = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `wish-${wish?.receiver || 'them'}.png`;
+            link.href = dataUrl;
+            link.click();
+        } catch (e) {
+            console.error("Failed to capture image", e);
+        } finally {
+            setDownloading(false);
         }
     };
 
@@ -364,7 +395,7 @@ export default function WishPage() {
 
                 {/* Wish card */}
                 {(status === 'locked' || status === 'unlocked') && envelopeOpen && (
-                    <div className="glass slide-up" style={{ width: '100%', maxWidth: 440 }}>
+                    <div ref={cardRef} className="glass slide-up" style={{ width: '100%', maxWidth: 440 }}>
 
                         {/* Card header */}
                         <div style={{ position: 'relative', height: 150, overflow: 'hidden' }}>
@@ -426,25 +457,36 @@ export default function WishPage() {
                                     {/* Action buttons */}
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                                         {/* Reply */}
-                                        <a href={replyUrl} className="action-btn reply">
-                                            💌 Send a reply
-                                        </a>
+                                        {!downloading && (
+                                            <a href={replyUrl} className="action-btn reply">
+                                                💌 Send a reply
+                                            </a>
+                                        )}
 
                                         {/* Share row */}
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
-                                            <button className="action-btn" onClick={shareWish}>
-                                                ⬆ Share this wish
-                                            </button>
-                                            <a className="action-btn wa" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
-                                                <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" /><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.975-1.305A9.944 9.944 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" /></svg>
-                                                WhatsApp
-                                            </a>
-                                        </div>
+                                        {!downloading && (
+                                            <>
+                                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                                                    <button className="action-btn" onClick={shareWish}>
+                                                        ⬆ Share this wish
+                                                    </button>
+                                                    <a className="action-btn wa" href={whatsappUrl} target="_blank" rel="noopener noreferrer">
+                                                        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" /><path d="M11.999 2C6.477 2 2 6.477 2 12c0 1.89.525 3.66 1.438 5.168L2 22l4.975-1.305A9.944 9.944 0 0012 22c5.523 0 10-4.477 10-10S17.523 2 12 2z" /></svg>
+                                                        WhatsApp
+                                                    </a>
+                                                </div>
+                                                <button className="action-btn" onClick={downloadImage} style={{ borderColor: 'rgba(255,255,255,0.25)', color: 'rgba(255,255,255,0.85)' }}>
+                                                    ⬇ Save as Image
+                                                </button>
+                                            </>
+                                        )}
 
                                         {/* Create own */}
-                                        <a href="/" className="action-btn" style={{ textAlign: 'center' }}>
-                                            Send your own wish →
-                                        </a>
+                                        {!downloading && (
+                                            <a href="/" className="action-btn" style={{ textAlign: 'center' }}>
+                                                Send your own wish →
+                                            </a>
+                                        )}
                                     </div>
                                 </div>
                             )}
