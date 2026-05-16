@@ -19,6 +19,16 @@ const BG_MAP = {
     '78': '/assets/78.webp',
     'bg': '/assets/bg.webp',
     '22921546': '/assets/22921546.webp',
+    'download': '/assets/download.webp',
+    'starry_night': '/assets/starry night.webp',
+    '104400': '/assets/104400.webp',
+    '13313422': '/assets/13313422_v902batch2-mynt-035-a.webp',
+    '133669247': '/assets/133669247_10213790.webp',
+    '15226637': '/assets/15226637_v659-aew-60-firstdayoffallautumn.webp',
+    '18242633': '/assets/18242633_rm435-088.webp',
+    '19335240': '/assets/19335240_6081613.webp',
+    '23669394': '/assets/23669394_6848091.webp',
+    '36043826': '/assets/36043826_8391987.webp',
 };
 const ALL_BGS = Object.values(BG_MAP);
 

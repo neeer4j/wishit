@@ -48,6 +48,16 @@ const BGS = [
   { id: '78', src: '/assets/78.webp', cats: ['get_well', 'friendship'] },
   { id: 'bg', src: '/assets/bg.webp', cats: ['colleague', 'graduation', 'farewell'] },
   { id: '22921546', src: '/assets/22921546.webp', cats: ['love', 'anniversary', 'birthday', 'parents'] },
+  { id: 'download', src: '/assets/download.webp', cats: ['birthday', 'congratulations', 'baby_shower'] },
+  { id: 'starry_night', src: '/assets/starry night.webp', cats: ['love', 'anniversary', 'new_year', 'farewell'] },
+  { id: '104400', src: '/assets/104400.webp', cats: ['love', 'anniversary', 'baby_shower'] },
+  { id: '13313422', src: '/assets/13313422_v902batch2-mynt-035-a.webp', cats: ['love', 'birthday', 'congratulations'] },
+  { id: '133669247', src: '/assets/133669247_10213790.webp', cats: ['farewell', 'parents', 'friendship'] },
+  { id: '15226637', src: '/assets/15226637_v659-aew-60-firstdayoffallautumn.webp', cats: ['get_well', 'farewell', 'friendship'] },
+  { id: '18242633', src: '/assets/18242633_rm435-088.webp', cats: ['baby_shower', 'get_well', 'love'] },
+  { id: '19335240', src: '/assets/19335240_6081613.webp', cats: ['friendship', 'colleague', 'farewell'] },
+  { id: '23669394', src: '/assets/23669394_6848091.webp', cats: ['parents', 'graduation', 'colleague'] },
+  { id: '36043826', src: '/assets/36043826_8391987.webp', cats: ['congratulations', 'new_year', 'graduation'] },
 ];
 
 const FONTS = [
