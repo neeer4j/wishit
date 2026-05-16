@@ -14,7 +14,7 @@ export const metadata = {
   title: "Wish Them — Send Heartfelt Wishes",
   description: "Create beautifully personalised wishes for the people you love",
   icons: {
-    icon: '/assets/icon.png',
+    icon: '/assets/icon/icon.ico',
   },
 };
 

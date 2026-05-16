@@ -34,21 +34,20 @@ const TEMPLATES = {
 
 // All 15 backgrounds with category affinity tags
 const BGS = [
-  { id: 'v1065-110', src: '/assets/v1065-110.jpg', cats: ['birthday', 'love', 'congratulations'] },
-  { id: '18929278', src: '/assets/18929278_rm175-noon-03b.jpg', cats: ['love', 'anniversary'] },
-  { id: '16398080', src: '/assets/16398080_v729-noon-4a.jpg', cats: ['friendship', 'farewell'] },
-  { id: '119781', src: '/assets/119781.jpg', cats: ['parents', 'get_well'] },
-  { id: '126893', src: '/assets/126893.jpg', cats: ['birthday', 'love', 'baby_shower'] },
-  { id: '139683', src: '/assets/139683.jpg', cats: ['anniversary', 'parents'] },
-  { id: '16340746', src: '/assets/16340746_v802-tang-19.jpg', cats: ['new_year', 'graduation'] },
-  { id: '16351030', src: '/assets/16351030_v850-sasi-18.jpg', cats: ['friendship', 'get_well'] },
-  { id: '169295', src: '/assets/169295.jpg', cats: ['birthday', 'baby_shower'] },
-  { id: '18705968', src: '/assets/18705968_rm184-aum-05e.jpg', cats: ['colleague', 'farewell'] },
-  { id: '18930119', src: '/assets/18930119_rm428-0056.jpg', cats: ['congratulations', 'graduation'] },
-  { id: '2150241036', src: '/assets/2150241036.jpg', cats: ['new_year', 'anniversary'] },
-  { id: '393', src: '/assets/393.jpg', cats: ['baby_shower', 'parents'] },
-  { id: '78', src: '/assets/78.jpg', cats: ['get_well', 'friendship'] },
-  { id: 'bg', src: '/assets/bg.jpg', cats: ['colleague', 'graduation', 'farewell'] },
+  { id: 'v1065-110', src: '/assets/v1065-110.webp', cats: ['birthday', 'love', 'congratulations'] },
+  { id: '18929278', src: '/assets/18929278_rm175-noon-03b.webp', cats: ['love', 'anniversary'] },
+  { id: '16398080', src: '/assets/16398080_v729-noon-4a.webp', cats: ['friendship', 'farewell'] },
+  { id: '119781', src: '/assets/119781.webp', cats: ['parents', 'get_well'] },
+  { id: '16340746', src: '/assets/16340746_v802-tang-19.webp', cats: ['new_year', 'graduation'] },
+  { id: '16351030', src: '/assets/16351030_v850-sasi-18.webp', cats: ['friendship', 'get_well'] },
+  { id: '169295', src: '/assets/169295.webp', cats: ['birthday', 'baby_shower'] },
+  { id: '18705968', src: '/assets/18705968_rm184-aum-05e.webp', cats: ['colleague', 'farewell'] },
+  { id: '18930119', src: '/assets/18930119_rm428-0056.webp', cats: ['congratulations', 'graduation'] },
+  { id: '2150241036', src: '/assets/2150241036.webp', cats: ['new_year', 'anniversary'] },
+  { id: '393', src: '/assets/393.webp', cats: ['baby_shower', 'parents'] },
+  { id: '78', src: '/assets/78.webp', cats: ['get_well', 'friendship'] },
+  { id: 'bg', src: '/assets/bg.webp', cats: ['colleague', 'graduation', 'farewell'] },
+  { id: '22921546', src: '/assets/22921546.webp', cats: ['love', 'anniversary', 'birthday', 'parents'] },
 ];
 
 const FONTS = [
@@ -810,21 +809,21 @@ export default function Home() {
                         </div>
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-                              <p style={{ fontWeight: 600, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>To: {w.receiver || 'Someone special'}</p>
-                              {isExpired ? (
-                                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,100,100,0.15)', color: 'rgba(255,150,150,0.9)' }}>EXPIRED</span>
-                              ) : isScheduled ? (
-                                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(100,150,255,0.15)', color: 'rgba(150,200,255,0.9)' }}>SCHEDULED</span>
-                              ) : isOpened ? (
-                                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(100,255,150,0.15)', color: 'rgba(150,255,180,0.9)' }}>OPENED</span>
-                              ) : (
-                                <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,200,100,0.15)', color: 'rgba(255,220,150,0.9)' }}>UNREAD</span>
-                              )}
+                            <p style={{ fontWeight: 600, fontSize: 15, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', margin: 0 }}>To: {w.receiver || 'Someone special'}</p>
+                            {isExpired ? (
+                              <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,100,100,0.15)', color: 'rgba(255,150,150,0.9)' }}>EXPIRED</span>
+                            ) : isScheduled ? (
+                              <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(100,150,255,0.15)', color: 'rgba(150,200,255,0.9)' }}>SCHEDULED</span>
+                            ) : isOpened ? (
+                              <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(100,255,150,0.15)', color: 'rgba(150,255,180,0.9)' }}>OPENED</span>
+                            ) : (
+                              <span style={{ fontSize: 9, fontWeight: 700, padding: '2px 6px', borderRadius: 4, background: 'rgba(255,200,100,0.15)', color: 'rgba(255,220,150,0.9)' }}>UNREAD</span>
+                            )}
                           </div>
                           {w.message && (
-                              <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 6 }}>
-                                  "{w.message}"
-                              </p>
+                            <p style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', marginBottom: 6 }}>
+                              "{w.message}"
+                            </p>
                           )}
                           <p style={{ fontSize: 11, color: 'rgba(255,255,255,0.3)', margin: 0 }}>{new Date(w.created_at).toLocaleDateString()}</p>
                         </div>
@@ -855,7 +854,7 @@ export default function Home() {
           <div style={{ marginTop: 20, textAlign: 'center' }}>
             <span className="credit-pill">
               <span className="credit-heart" style={{ fontSize: 13 }}>♡</span>
-              made with love by <strong style={{ fontWeight: 600, letterSpacing: '.3px' }}>french pizza</strong>
+              made with love by <strong style={{ fontWeight: 600, letterSpacing: '.3px' }}>a gulab jamun</strong>
             </span>
           </div>
         )}
