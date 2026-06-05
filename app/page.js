@@ -652,7 +652,7 @@ export default function Home() {
                       <label style={{ display: 'block', fontSize: 10, fontWeight: 600, color: 'rgba(255,255,255,0.4)', letterSpacing: '.5px', textTransform: 'uppercase', marginBottom: 4 }}>Schedule unlock (optional)</label>
                       <input type="datetime-local" className="option-inp"
                         value={scheduledAt}
-                        min={new Date().toISOString().slice(0, 16)}
+                        min={mounted ? new Date(Date.now() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : ''}
                         onChange={e => setScheduledAt(e.target.value)}
                         style={{ padding: '7px 10px', fontSize: 12, colorScheme: 'dark' }} />
                     </div>

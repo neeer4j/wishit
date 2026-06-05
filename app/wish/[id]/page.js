@@ -205,7 +205,7 @@ export default function WishPage() {
             // Apply a beautiful seamless background for the exported image
             if (bgSrc) {
                 // Ensure the background is fully loaded for html2canvas
-                cardRef.current.style.background = `linear-gradient(rgba(15,8,4,${overlayOpacity + 0.15}), rgba(15,8,4,${overlayOpacity + 0.2})), url(${bgSrc}) center/cover`;
+                cardRef.current.style.background = `linear-gradient(rgba(15,8,4,${overlayOpacity + 0.15}), rgba(15,8,4,${overlayOpacity + 0.2})), url("${bgSrc}") center/cover`;
             } else {
                 cardRef.current.style.background = '#1a0e08';
             }
